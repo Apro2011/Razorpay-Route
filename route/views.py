@@ -1,5 +1,5 @@
 from route.models import Reciever
-from route.serializers import RecieverSerializer
+from route.serializers import RecieverSerializer, GroupSerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,9 +8,38 @@ import razorpay
 import json
 import requests
 from core import settings
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 
 
 # Create your views here.
+class CreatingGroup(APIView):
+    def get(self, request, format=None):
+        groups = Group.objects.all()
+        serializer = GroupSerializer(groups, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = GroupSerializer(data=request.data)
+        if serializer.is_valid():
+            reciever_content_type = ContentType.objects.get_for_model(Reciever)
+            add_permission = Permission.objects.get(
+                codename="add_reciever", content_type=reciever_content_type
+            )
+            change_permission = Permission.objects.get(
+                codename="change_reciever", content_type=reciever_content_type
+            )
+            delete_permission = Permission.objects.get(
+                codename="delete_reciever", content_type=reciever_content_type
+            )
+            serializer.validated_data["permissions"].add(
+                add_permission, change_permission, delete_permission
+            )
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class RecieverList(APIView):
     def get(self, request, format=None):
         recievers = Reciever.objects.all()
@@ -20,6 +49,8 @@ class RecieverList(APIView):
     def post(self, request, format=None):
         serializer = RecieverSerializer(data=request.data)
         if serializer.is_valid():
+            group = Group.objects.get(name=serializer.validated_data.get("group_name"))
+            serializer.groups.add(group)
             serializer.save()
             # Create Linked Accounts
 
@@ -61,9 +92,9 @@ class RecieverList(APIView):
                 json=account_data,
             )
 
-            # razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
-            # serializer.validated_data["razor_id"] = razor_id
-            # serializer.save()
+            razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
+            serializer.validated_data["razor_id"] = razor_id
+            serializer.save()
 
             return Response(account_response.json(), status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
