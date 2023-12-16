@@ -61,9 +61,9 @@ class RecieverList(APIView):
                 json=account_data,
             )
 
-            razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
-            serializer.validated_data["razor_id"] = razor_id
-            serializer.save()
+            # razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
+            # serializer.validated_data["razor_id"] = razor_id
+            # serializer.save()
 
             return Response(account_response.json(), status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

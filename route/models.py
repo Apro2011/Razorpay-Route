@@ -1,8 +1,9 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
 
 # Create your models here.
-class Reciever(models.Model):
+class Reciever(AbstractUser):
     bank_account = models.CharField(max_length=250, unique=True, primary_key=True)
     ifsc_code = models.CharField(max_length=20)
     email = models.EmailField(max_length=250, unique=True)
