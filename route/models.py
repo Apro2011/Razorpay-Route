@@ -26,3 +26,4 @@ class Reciever(AbstractUser):
     pan = models.CharField(max_length=100)
     gst = models.CharField(max_length=100)
     razor_id = models.CharField(max_length=100, null=True, blank=True)
+    group_name = models.CharField(max_length=100, null=True, blank=True)

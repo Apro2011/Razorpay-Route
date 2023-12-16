@@ -22,6 +22,7 @@ class CreatingGroup(APIView):
     def post(self, request, format=None):
         serializer = GroupSerializer(data=request.data)
         if serializer.is_valid():
+            serializer.save()
             reciever_content_type = ContentType.objects.get_for_model(Reciever)
             add_permission = Permission.objects.get(
                 codename="add_reciever", content_type=reciever_content_type
@@ -32,10 +33,10 @@ class CreatingGroup(APIView):
             delete_permission = Permission.objects.get(
                 codename="delete_reciever", content_type=reciever_content_type
             )
-            serializer.validated_data["permissions"].add(
-                add_permission, change_permission, delete_permission
-            )
-            serializer.save()
+            Group.objects.get(
+                name=serializer.validated_data.get("name")
+            ).permissions.add(add_permission, change_permission, delete_permission)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -49,11 +50,15 @@ class RecieverList(APIView):
     def post(self, request, format=None):
         serializer = RecieverSerializer(data=request.data)
         if serializer.is_valid():
-            group = Group.objects.get(name=serializer.validated_data.get("group_name"))
-            serializer.groups.add(group)
             serializer.save()
-            # Create Linked Accounts
+            group = Group.objects.get(name=serializer.validated_data.get("group_name"))
+            reciever = Reciever.objects.get(
+                username=serializer.validated_data.get("username")
+            )
+            reciever.groups.add(group)
+            serializer.save()
 
+            # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"
             account_data = {
                 "email": serializer.validated_data.get("email"),
