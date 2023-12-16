@@ -3,6 +3,18 @@ from django.contrib.auth.models import AbstractUser
 
 
 # Create your models here.
+class Stakeholder(models.Model):
+    main_id = models.BigAutoField(unique=True, primary_key=True)
+    name = models.CharField(max_length=250)
+    email = models.EmailField(max_length=250, unique=True)
+    street = models.CharField(max_length=250)
+    city = models.CharField(max_length=250)
+    state = models.CharField(max_length=250)
+    postal_code = models.CharField(max_length=250)
+    country = models.CharField(max_length=20)
+    pan = models.CharField(max_length=100)
+
+
 class Reciever(AbstractUser):
     main_id = models.BigAutoField(unique=True, primary_key=True)
     ifsc_code = models.CharField(max_length=20)

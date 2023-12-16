@@ -97,9 +97,43 @@ class RecieverList(APIView):
                 json=account_data,
             )
 
-            razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
-            serializer.validated_data["razor_id"] = razor_id
-            serializer.save()
+            if account_response.status_code == 200:
+                razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
+                serializer.validated_data["razor_id"] = razor_id
+                serializer.save()
+
+                # Create Stakeholder account
+
+                stakeholder_url = (
+                    "https://api.razorpay.com/v2/accounts/" + razor_id + "/stakeholders"
+                )
+
+                stakeholder_data = {
+                    "name": serializer.validated_data["contact_name"],
+                    "email": serializer.validated_data["email"],
+                    "addresses": {
+                        "residential": {
+                            "street": serializer.validated_data["street1"],
+                            "city": serializer.validated_data["city"],
+                            "state": serializer.validated_data["state"],
+                            "postal_code": serializer.validated_data["postal_code"],
+                            "country": serializer.validated_data["country"],
+                        }
+                    },
+                    "kyc": {"pan": serializer.validated_data["pan"]},
+                    "notes": {"random_key": "random_value"},
+                }
+
+                stakeholder_response = requests.post(
+                    stakeholder_url,
+                    auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+                    headers={"Content-Type": "application/json"},
+                    json=stakeholder_data,
+                )
+
+                return Response(
+                    stakeholder_response.json(), status=status.HTTP_201_CREATED
+                )
 
             return Response(account_response.json(), status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
