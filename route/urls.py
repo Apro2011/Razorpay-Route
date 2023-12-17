@@ -6,6 +6,8 @@ urlpatterns = [
     path("recievers/", views.RecieverList.as_view()),
     path("groups/", views.CreatingGroup.as_view()),
     path("stakeholders/", views.CreateStakeholder.as_view()),
+    path("product-config/", views.ProductConfiguration.as_view()),
+    path("update-product-config/<int:pk>/", views.UpdateProductConfiguration.as_view()),
     path("split-payments/", views.SplitPayments.as_view()),
 ]
 urlpatterns = format_suffix_patterns(urlpatterns)
