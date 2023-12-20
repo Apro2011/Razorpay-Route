@@ -9,6 +9,7 @@ djangorestframework = "*"
 requests = "*"
 python-dotenv = "*"
 setuptools = "*"
+razorpay = "*"
 
 [dev-packages]
 

@@ -70,7 +70,7 @@ class RecieverList(APIView):
                 "email": serializer.validated_data.get("email"),
                 "phone": serializer.validated_data.get("phone"),
                 "type": serializer.validated_data.get("type"),
-                "reference_id": serializer.validated_data.get("reference_id"),
+                # "reference_id": serializer.validated_data.get("reference_id"),
                 "legal_business_name": serializer.validated_data.get(
                     "legal_business_name"
                 ),
@@ -92,7 +92,7 @@ class RecieverList(APIView):
                 },
                 "legal_info": {
                     "pan": serializer.validated_data.get("pan"),
-                    "gst": serializer.validated_data.get("gst"),
+                    #     "gst": serializer.validated_data.get("gst"),
                 },
             }
 
@@ -103,12 +103,17 @@ class RecieverList(APIView):
                 json=account_data,
             )
 
+            print(account_response.content.decode("utf-8"))
+
             razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
             serializer.validated_data["razor_id"] = razor_id
             serializer.save()
 
             return Response(account_response.json(), status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            [serializer.errors, account_response.json()],
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class CreateStakeholder(APIView):
@@ -141,7 +146,7 @@ class CreateStakeholder(APIView):
                     }
                 },
                 "kyc": {"pan": serializer.validated_data["pan"]},
-                "notes": {"random_key": "random_value"},
+                # "notes": {"random_key": "random_value"},
             }
 
             stakeholder_response = requests.post(
@@ -156,7 +161,7 @@ class CreateStakeholder(APIView):
 
 
 class ProductConfiguration(APIView):
-    def get(self, request, format=None):
+    def get(self, request, linked_account_id, pk, format=None):
         products = ProductConfigDetails.objects.all()
         serializer = ProductConfigDetailsSerializer(products, many=True)
         return Response(serializer.data)
@@ -174,6 +179,7 @@ class ProductConfiguration(APIView):
             # Request Product Configuration
             product_config_data = {
                 "product_name": serializer.validated_data.get("product_name"),
+                "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
                 "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
             }
 
@@ -205,8 +211,25 @@ class UpdateProductConfiguration(APIView):
 
     def get(self, request, pk, format=None):
         product = self.get_object(pk)
-        serializer = UpdateProductConfigDetailsSerializer(product)
-        return Response(serializer.data)
+        serializer = UpdateProductConfigDetailsSerializer(product, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+        reciever_instance = serializer.validated_data.get("linked_account")
+        razor_id = reciever_instance.razor_id
+        product_id = product.product_id
+        update_product_config_url = (
+            "https://api.razorpay.com/v2/accounts/"
+            + razor_id
+            + "/products/"
+            + product_id
+            + "/"
+        )
+        update_product_config_response = requests.get(
+            update_product_config_url,
+            auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+            headers={"Content-Type": "application/json"},
+        )
+        return Response([serializer.data, update_product_config_response.json()])
 
     def patch(self, request, pk, format=None):
         product = self.get_object(pk)

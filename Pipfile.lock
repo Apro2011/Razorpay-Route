@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "60f668459422c930b666983f9a4815eeaf91a1faa5629a0d6028d00b82d45e96"
+            "sha256": "e16784d788fa14a4f771071b1a1efe40bc1c5a347006a0ef6ca4cc21dd299306"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -130,12 +130,12 @@
         },
         "django": {
             "hashes": [
-                "sha256:8e0f1c2c2786b5c0e39fe1afce24c926040fad47c8ea8ad30aaf1188df29fc41",
-                "sha256:e1d37c51ad26186de355cbcec16613ebdabfa9689bbade9c538835205a8abbe9"
+                "sha256:3a9fd52b8dbeae335ddf4a9dfa6c6a0853a1122f1fb071a8d5eca979f73a05c8",
+                "sha256:7d29e14dfbc19cb6a95a4bd669edbde11f5d4c6a71fdaa42c2d40b6846e807f7"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.8'",
-            "version": "==4.2.7"
+            "markers": "python_version >= '3.10'",
+            "version": "==5.0"
         },
         "djangorestframework": {
             "hashes": [
@@ -169,6 +169,14 @@
                 "sha256:ce42d816b81b68506614c11e8937d3aa9e41007ceb50bfdcb0749b921bf646c7"
             ],
             "version": "==2023.3.post1"
+        },
+        "razorpay": {
+            "hashes": [
+                "sha256:236af5a6ae6512345907f4b7f42297980bb8314dbbbc684313a476b7f45179bd",
+                "sha256:89b01c386cc93cc5af07d613c99c24fa3ded95d7def94b89e0ac294fb49cbe7c"
+            ],
+            "index": "pypi",
+            "version": "==1.4.1"
         },
         "requests": {
             "hashes": [
