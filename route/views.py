@@ -1,6 +1,7 @@
 from route.models import Reciever, Stakeholder, ProductConfigDetails
 from route.serializers import (
     RecieverSerializer,
+    RecieverDetailsSerializer,
     GroupSerializer,
     StakeholderSerializer,
     ProductConfigDetailsSerializer,
@@ -62,7 +63,6 @@ class RecieverList(APIView):
                 username=serializer.validated_data.get("username")
             )
             reciever.groups.add(group)
-            serializer.save()
 
             # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"
@@ -70,7 +70,7 @@ class RecieverList(APIView):
                 "email": serializer.validated_data.get("email"),
                 "phone": serializer.validated_data.get("phone"),
                 "type": serializer.validated_data.get("type"),
-                # "reference_id": serializer.validated_data.get("reference_id"),
+                "reference_id": serializer.validated_data.get("reference_id"),
                 "legal_business_name": serializer.validated_data.get(
                     "legal_business_name"
                 ),
@@ -92,7 +92,7 @@ class RecieverList(APIView):
                 },
                 "legal_info": {
                     "pan": serializer.validated_data.get("pan"),
-                    #     "gst": serializer.validated_data.get("gst"),
+                    "gst": serializer.validated_data.get("gst"),
                 },
             }
 
@@ -103,8 +103,6 @@ class RecieverList(APIView):
                 json=account_data,
             )
 
-            print(account_response.content.decode("utf-8"))
-
             razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
             serializer.validated_data["razor_id"] = razor_id
             serializer.save()
@@ -114,6 +112,27 @@ class RecieverList(APIView):
             [serializer.errors, account_response.json()],
             status=status.HTTP_400_BAD_REQUEST,
         )
+
+
+class RecieverDetails(APIView):
+    def get_object(self, pk):
+        try:
+            return Reciever.objects.get(pk=pk)
+        except Reciever.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk, format=None):
+        reciever = self.get_object(pk=pk)
+        serializer = RecieverSerializer(reciever)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk, format=None):
+        reciever = self.get_object(pk=pk)
+        serializer = RecieverDetailsSerializer(reciever, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CreateStakeholder(APIView):
@@ -146,7 +165,7 @@ class CreateStakeholder(APIView):
                     }
                 },
                 "kyc": {"pan": serializer.validated_data["pan"]},
-                # "notes": {"random_key": "random_value"},
+                "notes": {"random_key": "random_value"},
             }
 
             stakeholder_response = requests.post(
@@ -161,7 +180,7 @@ class CreateStakeholder(APIView):
 
 
 class ProductConfiguration(APIView):
-    def get(self, request, linked_account_id, pk, format=None):
+    def get(self, request, format=None):
         products = ProductConfigDetails.objects.all()
         serializer = ProductConfigDetailsSerializer(products, many=True)
         return Response(serializer.data)
@@ -275,16 +294,17 @@ class UpdateProductConfiguration(APIView):
 class SplitPayments(APIView):
     def post(self, request, format=None):
         initial_amount = int(request.data.get("initial_amount")) * 100
-        recievers_ids_and_percentages = request.data.get(
-            "recievers_ids_and_percentages", []
-        )
+        group_name = request.data.get("group_name", [])
+
+        reciever_list_in_group = Reciever.objects.filter(group_name=group_name)
+
         client = razorpay.Client(
             auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET)
         )
 
         percentage_sum = 0
-        for p in recievers_ids_and_percentages:
-            percentage_sum += p[1]
+        for p in reciever_list_in_group:
+            percentage_sum += int(p.percentage)
 
         if percentage_sum != 100:
             return Response(
@@ -292,18 +312,12 @@ class SplitPayments(APIView):
                 status=status.HTTP_412_PRECONDITION_FAILED,
             )
 
-        accounts = []
-
-        for reciever in recievers_ids_and_percentages:
-            reciever_amount = initial_amount * (reciever[1] / 100)
-            account = Reciever.objects.get(bank_account=reciever[0])
-            account.payment = reciever_amount
-            account.percentage = reciever[1]
-            account.save()
-            accounts.append(account)
+        for reciever in reciever_list_in_group:
+            reciever_amount = initial_amount * (int(reciever.percentage) / 100)
+            reciever.payment = reciever_amount
 
         transfer_list = []
-        for a in accounts:
+        for a in reciever_list_in_group:
             transfer_list.append(
                 {
                     "account": a.razor_id,

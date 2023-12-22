@@ -4,6 +4,7 @@ from route import views
 
 urlpatterns = [
     path("recievers/", views.RecieverList.as_view()),
+    path("reciever-details/<int:pk>/", views.RecieverDetails.as_view()),
     path("groups/", views.CreatingGroup.as_view()),
     path("stakeholders/", views.CreateStakeholder.as_view()),
     path("product-config/", views.ProductConfiguration.as_view()),

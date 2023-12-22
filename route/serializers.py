@@ -15,6 +15,12 @@ class RecieverSerializer(serializers.ModelSerializer):
         exclude = ["password"]
 
 
+class RecieverDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reciever
+        fields = ["percentage"]
+
+
 class StakeholderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stakeholder
