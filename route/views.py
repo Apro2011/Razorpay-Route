@@ -1,11 +1,8 @@
-from route.models import Reciever, Stakeholder, ProductConfigDetails
+from route.models import Reciever
 from route.serializers import (
     RecieverSerializer,
     RecieverDetailsSerializer,
     GroupSerializer,
-    StakeholderSerializer,
-    ProductConfigDetailsSerializer,
-    UpdateProductConfigDetailsSerializer,
 )
 from django.http import Http404
 from rest_framework.views import APIView
@@ -103,11 +100,120 @@ class RecieverList(APIView):
                 json=account_data,
             )
 
-            razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
-            serializer.validated_data["razor_id"] = razor_id
-            serializer.save()
+            if account_response.status_code != 200:
+                return Response(account_response.json(), status=status.HTTP_201_CREATED)
+            else:
+                razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
+                serializer.validated_data["razor_id"] = razor_id
+                serializer.save()
+                stakeholder_url = (
+                    "https://api.razorpay.com/v2/accounts/" + razor_id + "/stakeholders"
+                )
 
-            return Response(account_response.json(), status=status.HTTP_201_CREATED)
+                # Create Stakeholder account
+                stakeholder_data = {
+                    "name": serializer.validated_data["name"],
+                    "email": serializer.validated_data["email"],
+                    "addresses": {
+                        "residential": {
+                            "street": serializer.validated_data["street"],
+                            "city": serializer.validated_data["city"],
+                            "state": serializer.validated_data["state"],
+                            "postal_code": serializer.validated_data["postal_code"],
+                            "country": serializer.validated_data["country"],
+                        }
+                    },
+                }
+
+                stakeholder_response = requests.post(
+                    stakeholder_url,
+                    auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+                    headers={"Content-Type": "application/json"},
+                    json=stakeholder_data,
+                )
+
+                if stakeholder_response.status_code != 200:
+                    return Response(
+                        stakeholder_response.json(), status=status.HTTP_201_CREATED
+                    )
+                else:
+                    product_config_url = (
+                        "https://api.razorpay.com/v2/accounts/" + razor_id + "/products"
+                    )
+
+                    # Request Product Configuration
+                    product_config_data = {
+                        "product_name": serializer.validated_data.get("product_name"),
+                        "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
+                        "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
+                    }
+
+                    product_config_response = requests.post(
+                        product_config_url,
+                        auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+                        headers={"Content-Type": "application/json"},
+                        json=product_config_data,
+                    )
+
+                    if product_config_response.status_code != 200:
+                        return Response(
+                            product_config_response.json(),
+                            status=status.HTTP_201_CREATED,
+                        )
+                    else:
+                        product_id = json.loads(
+                            product_config_response.content.decode("utf-8")
+                        )["id"]
+                        serializer.validated_data["product_id"] = product_id
+                        serializer.save()
+
+                        update_product_config_url = (
+                            "https://api.razorpay.com/v2/accounts/"
+                            + razor_id
+                            + "/products/"
+                            + product_id
+                            + "/"
+                        )
+
+                        # Request Update Product Configuration
+                        update_product_config_data = {
+                            "settlements": {
+                                "account_number": serializer.validated_data.get(
+                                    "account_number"
+                                ),
+                                "ifsc_code": serializer.validated_data.get("ifsc_code"),
+                                "beneficiary_name": serializer.validated_data.get(
+                                    "beneficiary_name"
+                                ),
+                            },
+                            "tnc_accepted": serializer.validated_data.get(
+                                "tnc_accepted"
+                            ),
+                        }
+
+                        update_product_config_response = requests.patch(
+                            update_product_config_url,
+                            auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+                            headers={"Content-Type": "application/json"},
+                            json=update_product_config_data,
+                        )
+
+                        if update_product_config_response.status_code != 200:
+                            return Response(
+                                update_product_config_response.json(),
+                                status=status.HTTP_201_CREATED,
+                            )
+                        else:
+                            return Response(
+                                [
+                                    account_response.json(),
+                                    stakeholder_response.json(),
+                                    product_config_response.json(),
+                                    update_product_config_response.json(),
+                                ],
+                                status=status.HTTP_201_CREATED,
+                            )
+
         return Response(
             [serializer.errors, account_response.json()],
             status=status.HTTP_400_BAD_REQUEST,
@@ -132,162 +238,6 @@ class RecieverDetails(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CreateStakeholder(APIView):
-    def get(self, request, format=None):
-        stakeholders = Stakeholder.objects.all()
-        serializer = StakeholderSerializer(stakeholders, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        serializer = StakeholderSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            reciever_instance = serializer.validated_data.get("linked_account")
-            razor_id = reciever_instance.razor_id
-            stakeholder_url = (
-                "https://api.razorpay.com/v2/accounts/" + razor_id + "/stakeholders"
-            )
-
-            # Create Stakeholder account
-            stakeholder_data = {
-                "name": serializer.validated_data["name"],
-                "email": serializer.validated_data["email"],
-                "addresses": {
-                    "residential": {
-                        "street": serializer.validated_data["street"],
-                        "city": serializer.validated_data["city"],
-                        "state": serializer.validated_data["state"],
-                        "postal_code": serializer.validated_data["postal_code"],
-                        "country": serializer.validated_data["country"],
-                    }
-                },
-                "kyc": {"pan": serializer.validated_data["pan"]},
-                "notes": {"random_key": "random_value"},
-            }
-
-            stakeholder_response = requests.post(
-                stakeholder_url,
-                auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
-                headers={"Content-Type": "application/json"},
-                json=stakeholder_data,
-            )
-
-            return Response(stakeholder_response.json(), status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ProductConfiguration(APIView):
-    def get(self, request, format=None):
-        products = ProductConfigDetails.objects.all()
-        serializer = ProductConfigDetailsSerializer(products, many=True)
-        return Response(serializer.data)
-
-    def post(self, request, format=None):
-        serializer = ProductConfigDetailsSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            reciever_instance = serializer.validated_data.get("linked_account")
-            razor_id = reciever_instance.razor_id
-            product_config_url = (
-                "https://api.razorpay.com/v2/accounts/" + razor_id + "/products"
-            )
-
-            # Request Product Configuration
-            product_config_data = {
-                "product_name": serializer.validated_data.get("product_name"),
-                "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
-                "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
-            }
-
-            product_config_response = requests.post(
-                product_config_url,
-                auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
-                headers={"Content-Type": "application/json"},
-                json=product_config_data,
-            )
-
-            product_id = json.loads(product_config_response.content.decode("utf-8"))[
-                "id"
-            ]
-            serializer.validated_data["product_id"] = product_id
-            serializer.save()
-
-            return Response(
-                product_config_response.json(), status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class UpdateProductConfiguration(APIView):
-    def get_object(self, pk):
-        try:
-            return ProductConfigDetails.objects.get(pk=pk)
-        except ProductConfigDetails.DoesNotExist:
-            raise Http404
-
-    def get(self, request, pk, format=None):
-        product = self.get_object(pk)
-        serializer = UpdateProductConfigDetailsSerializer(product, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-        reciever_instance = serializer.validated_data.get("linked_account")
-        razor_id = reciever_instance.razor_id
-        product_id = product.product_id
-        update_product_config_url = (
-            "https://api.razorpay.com/v2/accounts/"
-            + razor_id
-            + "/products/"
-            + product_id
-            + "/"
-        )
-        update_product_config_response = requests.get(
-            update_product_config_url,
-            auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
-            headers={"Content-Type": "application/json"},
-        )
-        return Response([serializer.data, update_product_config_response.json()])
-
-    def patch(self, request, pk, format=None):
-        product = self.get_object(pk)
-        serializer = UpdateProductConfigDetailsSerializer(product, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            reciever_instance = serializer.validated_data.get("linked_account")
-            razor_id = reciever_instance.razor_id
-            product_id = product.product_id
-            update_product_config_url = (
-                "https://api.razorpay.com/v2/accounts/"
-                + razor_id
-                + "/products/"
-                + product_id
-                + "/"
-            )
-
-            # Request Update Product Configuration
-            update_product_config_data = {
-                "settlements": {
-                    "account_number": serializer.validated_data.get("account_number"),
-                    "ifsc_code": serializer.validated_data.get("ifsc_code"),
-                    "beneficiary_name": serializer.validated_data.get(
-                        "beneficiary_name"
-                    ),
-                },
-                "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
-            }
-
-            update_product_config_response = requests.patch(
-                update_product_config_url,
-                auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
-                headers={"Content-Type": "application/json"},
-                json=update_product_config_data,
-            )
-
-            return Response(
-                update_product_config_response.json(), status=status.HTTP_201_CREATED
-            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

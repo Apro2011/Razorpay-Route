@@ -26,27 +26,8 @@ class Reciever(AbstractUser):
     gst = models.CharField(max_length=100, null=True, blank=True)
     razor_id = models.CharField(max_length=100, null=True, blank=True)
     group_name = models.CharField(max_length=100, null=True, blank=True)
-
-
-class Stakeholder(models.Model):
-    main_id = models.BigAutoField(unique=True, primary_key=True)
-    linked_account = models.ForeignKey(Reciever, on_delete=models.CASCADE)
-    name = models.CharField(max_length=250)
-    email = models.EmailField(max_length=250, unique=True)
-    street = models.CharField(max_length=250, null=True, blank=True)
-    city = models.CharField(max_length=250, null=True, blank=True)
-    state = models.CharField(max_length=250, null=True, blank=True)
-    postal_code = models.CharField(max_length=250, null=True, blank=True)
-    country = models.CharField(max_length=20, null=True, blank=True)
-    pan = models.CharField(max_length=100, null=True, blank=True)
-
-
-class ProductConfigDetails(models.Model):
-    main_id = models.BigAutoField(unique=True, primary_key=True)
-    linked_account = models.ForeignKey(Reciever, on_delete=models.CASCADE)
-    product_name = models.CharField(max_length=100)
     tnc_accepted = models.BooleanField(default=False)
     product_id = models.CharField(max_length=100, null=True, blank=True)
+    product_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=250, null=True, blank=True)
     ifsc_code = models.CharField(max_length=20, null=True, blank=True)
-    beneficiary_name = models.CharField(max_length=250, null=True, blank=True)
