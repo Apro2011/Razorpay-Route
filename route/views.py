@@ -112,11 +112,11 @@ class RecieverList(APIView):
 
                 # Create Stakeholder account
                 stakeholder_data = {
-                    "name": serializer.validated_data["name"],
+                    "name": serializer.validated_data["contact_name"],
                     "email": serializer.validated_data["email"],
                     "addresses": {
                         "residential": {
-                            "street": serializer.validated_data["street"],
+                            "street": serializer.validated_data["street1"],
                             "city": serializer.validated_data["city"],
                             "state": serializer.validated_data["state"],
                             "postal_code": serializer.validated_data["postal_code"],
@@ -144,7 +144,6 @@ class RecieverList(APIView):
                     # Request Product Configuration
                     product_config_data = {
                         "product_name": serializer.validated_data.get("product_name"),
-                        "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
                         "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
                     }
 
@@ -183,7 +182,7 @@ class RecieverList(APIView):
                                 ),
                                 "ifsc_code": serializer.validated_data.get("ifsc_code"),
                                 "beneficiary_name": serializer.validated_data.get(
-                                    "beneficiary_name"
+                                    "legal_business_name"
                                 ),
                             },
                             "tnc_accepted": serializer.validated_data.get(
@@ -215,7 +214,7 @@ class RecieverList(APIView):
                             )
 
         return Response(
-            [serializer.errors, account_response.json()],
+            serializer.errors,
             status=status.HTTP_400_BAD_REQUEST,
         )
 

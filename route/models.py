@@ -31,3 +31,19 @@ class Reciever(AbstractUser):
     product_name = models.CharField(max_length=100)
     account_number = models.CharField(max_length=250, null=True, blank=True)
     ifsc_code = models.CharField(max_length=20, null=True, blank=True)
+
+    # Add related_name to resolve reverse accessor clash
+    groups = models.ManyToManyField(
+        "auth.Group",
+        verbose_name="Groups",
+        blank=True,
+        related_name="reciever_groups",
+        related_query_name="reciever_group",
+    )
+    user_permissions = models.ManyToManyField(
+        "auth.Permission",
+        verbose_name="User permissions",
+        blank=True,
+        related_name="reciever_user_permissions",
+        related_query_name="reciever_user_permission",
+    )
