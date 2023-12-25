@@ -4,10 +4,13 @@ from sender_auth_app.serializers import SenderSerializer, SenderAuthSerializer
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import permission_classes
+from rest_framework.permissions import IsAuthenticated
 
 
 # Create your views here.
 class SenderCreationAPI(APIView):
+    @permission_classes([IsAuthenticated])
     def get(self, request, format=None):
         senders = Sender.objects.all()
         serializer = SenderSerializer(senders, many=True)
@@ -54,3 +57,17 @@ class SenderAuthAPI(APIView):
                 "data": serializer.errors,
             }
         )
+
+
+class SenderLogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)

@@ -15,4 +15,5 @@ urlpatterns = [
     ),
     path("sender/", views.SenderCreationAPI.as_view()),
     path("login/", views.SenderAuthAPI.as_view()),
+    path("logout/", views.SenderLogoutView.as_view(), name="auth_logout"),
 ]

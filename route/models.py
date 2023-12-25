@@ -1,9 +1,12 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 
 
 # Create your models here.
-class Reciever(AbstractUser):
+class RecieversGroup(models.Model):
+    name = models.CharField(max_length=200)
+
+
+class Reciever(models.Model):
     main_id = models.BigAutoField(unique=True, primary_key=True)
     email = models.EmailField(max_length=250, unique=True)
     phone = models.CharField(max_length=15)
@@ -34,16 +37,5 @@ class Reciever(AbstractUser):
 
     # Add related_name to resolve reverse accessor clash
     groups = models.ManyToManyField(
-        "auth.Group",
-        verbose_name="Groups",
-        blank=True,
-        related_name="reciever_groups",
-        related_query_name="reciever_group",
-    )
-    user_permissions = models.ManyToManyField(
-        "auth.Permission",
-        verbose_name="User permissions",
-        blank=True,
-        related_name="reciever_user_permissions",
-        related_query_name="reciever_user_permission",
+        RecieversGroup, related_name="reciever_recievergroups", blank=True
     )

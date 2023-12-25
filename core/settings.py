@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv()
 
@@ -141,4 +142,10 @@ REST_FRAMEWORK = {
     ],
 }
 
-# AUTH_USER_MODEL = "route.Reciever"
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=10),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
+    "AUTH_HEADER_TYPES": ("JWT",),
+}
+
+AUTH_USER_MODEL = "sender_auth_app.Sender"

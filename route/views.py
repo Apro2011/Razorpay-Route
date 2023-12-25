@@ -1,8 +1,8 @@
-from route.models import Reciever
+from route.models import Reciever, RecieversGroup
 from route.serializers import (
     RecieverSerializer,
     RecieverDetailsSerializer,
-    GroupSerializer,
+    RecieversGroupSerializer,
 )
 from django.http import Http404
 from rest_framework.views import APIView
@@ -12,40 +12,31 @@ import razorpay
 import json
 import requests
 from core import settings
-from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 # Create your views here.
 class CreatingGroup(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, format=None):
-        groups = Group.objects.all()
-        serializer = GroupSerializer(groups, many=True)
+        groups = RecieversGroup.objects.all()
+        serializer = RecieversGroupSerializer(groups, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
-        serializer = GroupSerializer(data=request.data)
+        serializer = RecieversGroupSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            reciever_content_type = ContentType.objects.get_for_model(Reciever)
-            add_permission = Permission.objects.get(
-                codename="add_reciever", content_type=reciever_content_type
-            )
-            change_permission = Permission.objects.get(
-                codename="change_reciever", content_type=reciever_content_type
-            )
-            delete_permission = Permission.objects.get(
-                codename="delete_reciever", content_type=reciever_content_type
-            )
-            Group.objects.get(
-                name=serializer.validated_data.get("name")
-            ).permissions.add(add_permission, change_permission, delete_permission)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class RecieverList(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, format=None):
         recievers = Reciever.objects.all()
         serializer = RecieverSerializer(recievers, many=True)
@@ -54,13 +45,14 @@ class RecieverList(APIView):
     def post(self, request, format=None):
         serializer = RecieverSerializer(data=request.data)
         if serializer.is_valid():
+            group = RecieversGroup.objects.get(
+                name=serializer.validated_data.get("group_name")
+            )
             serializer.save()
-            group = Group.objects.get(name=serializer.validated_data.get("group_name"))
             reciever = Reciever.objects.get(
-                username=serializer.validated_data.get("username")
+                reference_id=serializer.validated_data.get("reference_id")
             )
             reciever.groups.add(group)
-
             # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"
             account_data = {
@@ -220,6 +212,8 @@ class RecieverList(APIView):
 
 
 class RecieverDetails(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get_object(self, pk):
         try:
             return Reciever.objects.get(pk=pk)
@@ -241,6 +235,8 @@ class RecieverDetails(APIView):
 
 
 class SplitPayments(APIView):
+    permission_classes = [IsAuthenticated]
+
     def post(self, request, format=None):
         initial_amount = int(request.data.get("initial_amount")) * 100
         group_name = request.data.get("group_name", [])
