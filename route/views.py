@@ -235,7 +235,7 @@ class RecieverDetails(APIView):
 
 
 class UPIPaymentLinkAPIs(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         payments = Payment.objects.all()
