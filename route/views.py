@@ -1,8 +1,9 @@
-from route.models import Reciever, RecieversGroup
+from route.models import Reciever, RecieversGroup, Payment
 from route.serializers import (
     RecieverSerializer,
     RecieverDetailsSerializer,
     RecieversGroupSerializer,
+    PaymentSerializer,
 )
 from django.http import Http404
 from rest_framework.views import APIView
@@ -230,6 +231,62 @@ class RecieverDetails(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UPIPaymentLinkAPIs(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        payments = Payment.objects.all()
+        serializer = PaymentSerializer(payments, many=True)
+        return Response(serializer.data)
+
+    def post(self, request, format=None):
+        serializer = PaymentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+
+            # Create UPI Payment Link
+            payment_url = "https://api.razorpay.com/v1/payment_links/"
+            payment_data = {
+                "upi_link": serializer.validated_data.get("upi_link"),
+                "amount": str(int(serializer.validated_data.get("amount")) * 100),
+                "currency": serializer.validated_data.get("currency"),
+                "reference_id": serializer.validated_data.get("reference_id"),
+                "description": serializer.validated_data.get("description"),
+                "customer": {
+                    "name": serializer.validated_data.get("customer_name"),
+                    "contact": serializer.validated_data.get("customer_contact"),
+                    "email": serializer.validated_data.get("customer_email"),
+                },
+                "callback_url": serializer.validated_data.get("callback_url"),
+                "callback_method": serializer.validated_data.get("callback_method"),
+            }
+
+            payment_response = requests.post(
+                payment_url,
+                auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+                headers={"Contact-Type": "application/json"},
+                json=payment_data,
+            )
+
+            payment_endpoint_data = json.loads(payment_response.content.decode("utf-8"))
+            serializer.validated_data["payment_link_id"] = payment_endpoint_data["id"]
+            if payment_endpoint_data["payments"] != None:
+                serializer.validated_data["paid_amount"] = payment_endpoint_data[
+                    "payments"
+                ]["amount"]
+                serializer.validated_data["paid_payment_id"] = payment_endpoint_data[
+                    "payments"
+                ]["payment_id"]
+                serializer.validated_data["paid_plink_id"] = payment_endpoint_data[
+                    "payment"
+                ]["plink_id"]
+            serializer.validated_data["short_url"] = payment_endpoint_data["short_url"]
+            serializer.validated_data["user_id"] = payment_endpoint_data["user_id"]
+
+            return Response(payment_response.json(), status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

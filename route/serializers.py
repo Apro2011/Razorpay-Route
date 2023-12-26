@@ -1,4 +1,4 @@
-from route.models import Reciever, RecieversGroup
+from route.models import Reciever, RecieversGroup, Payment
 from rest_framework import serializers
 
 
@@ -18,3 +18,9 @@ class RecieverDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reciever
         fields = ["percentage"]
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = "__all__"
