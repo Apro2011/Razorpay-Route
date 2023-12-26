@@ -39,3 +39,16 @@ class Reciever(models.Model):
     groups = models.ManyToManyField(
         RecieversGroup, related_name="reciever_recievergroups", blank=True
     )
+
+
+class Payment(models.Model):
+    upi_link = models.BooleanField(default=True)
+    amount = models.CharField(max_length=100)
+    currency = models.CharField(max_length=10, default="INR")
+    reference_id = models.CharField(max_length=100, unique=True)
+    description = models.TextField(null=True, blank=True)
+    customer_name = models.CharField(max_length=200, null=True, blank=True)
+    customer_contact = models.CharField(max_length=15, null=True, blank=True)
+    email = models.EmailField(max_length=250, null=True, blank=True)
+    callback_url = models.URLField(max_length=200, null=True, blank=True)
+    callback_method = models.CharField(max_length=200, default="get")

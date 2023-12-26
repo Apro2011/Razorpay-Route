@@ -12,8 +12,7 @@ import razorpay
 import json
 import requests
 from core import settings
-from django.contrib.contenttypes.models import ContentType
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated
 
 
 # Create your views here.
