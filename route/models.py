@@ -43,7 +43,7 @@ class Reciever(models.Model):
 
 class Payment(models.Model):
     upi_link = models.BooleanField(default=True)
-    amount = models.CharField(max_length=100)
+    amount = models.IntegerField()
     currency = models.CharField(max_length=10, default="INR")
     reference_id = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)

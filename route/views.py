@@ -235,7 +235,7 @@ class RecieverDetails(APIView):
 
 
 class UPIPaymentLinkAPIs(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         payments = Payment.objects.all()
@@ -251,7 +251,7 @@ class UPIPaymentLinkAPIs(APIView):
             payment_url = "https://api.razorpay.com/v1/payment_links/"
             payment_data = {
                 "upi_link": serializer.validated_data.get("upi_link"),
-                "amount": str(int(serializer.validated_data.get("amount")) * 100),
+                "amount": int(serializer.validated_data.get("amount")) * 100,
                 "currency": serializer.validated_data.get("currency"),
                 "reference_id": serializer.validated_data.get("reference_id"),
                 "description": serializer.validated_data.get("description"),
@@ -272,6 +272,7 @@ class UPIPaymentLinkAPIs(APIView):
             )
 
             payment_endpoint_data = json.loads(payment_response.content.decode("utf-8"))
+            print(payment_endpoint_data)
             serializer.validated_data["payment_link_id"] = payment_endpoint_data["id"]
             if payment_endpoint_data["payments"] != None:
                 serializer.validated_data["paid_amount"] = payment_endpoint_data[
