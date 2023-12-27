@@ -258,7 +258,7 @@ class UPIPaymentLinkAPIs(APIView):
                 "customer": {
                     "name": serializer.validated_data.get("customer_name"),
                     "contact": serializer.validated_data.get("customer_contact"),
-                    "email": serializer.validated_data.get("customer_email"),
+                    "email": serializer.validated_data.get("email"),
                 },
                 "callback_url": serializer.validated_data.get("callback_url"),
                 "callback_method": serializer.validated_data.get("callback_method"),
@@ -301,9 +301,9 @@ class SplitPayments(APIView):
 
         reciever_list_in_group = Reciever.objects.filter(group_name=group_name)
 
-        client = razorpay.Client(
-            auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET)
-        )
+        # client = razorpay.Client(
+        #     auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET)
+        # )
 
         percentage_sum = 0
         for p in reciever_list_in_group:
