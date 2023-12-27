@@ -297,6 +297,7 @@ class SplitPayments(APIView):
     def post(self, request, format=None):
         initial_amount = int(request.data.get("initial_amount")) * 100
         group_name = request.data.get("group_name", [])
+        payment_id = request.data.get("payment_id")
 
         reciever_list_in_group = Reciever.objects.filter(group_name=group_name)
 
@@ -329,12 +330,20 @@ class SplitPayments(APIView):
                 }
             )
 
-        transfer = client.order.create(
-            {
-                "amount": int(initial_amount),
-                "currency": "INR",
-                "transfers": [_ for _ in transfer_list],
-            }
+        payment_link = Payment.objects.get(pk=payment_id)
+        payment_id = payment_link.paid_payment_id
+
+        transfer_url = (
+            "https://api.razorpay.com/v1/payments/" + payment_id + "/transfers"
         )
 
-        return Response(transfer, status=status.HTTP_202_ACCEPTED)
+        transfer_data = {"transfers": transfer_list}
+
+        transfer_response = requests.post(
+            transfer_url,
+            auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+            headers={"Contact-Type": "application/json"},
+            json=transfer_data,
+        )
+
+        return Response(transfer_response.json(), status=status.HTTP_202_ACCEPTED)
