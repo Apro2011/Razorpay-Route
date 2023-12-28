@@ -4,6 +4,14 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class Sender(AbstractUser):
+    email = models.EmailField(unique=True, blank=True)
+    password = models.CharField(max_length=16, blank=True)
+    password2 = models.CharField(max_length=16, blank=True)
+    first_name = models.CharField(max_length=200, null=True, blank=True)
+    last_name = models.CharField(max_length=200, blank=True, null=True)
+
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["password", "password2"]
     # Add related_name to resolve reverse accessor clash
     groups = models.ManyToManyField(
         "auth.Group",

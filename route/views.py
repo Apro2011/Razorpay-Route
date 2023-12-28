@@ -273,8 +273,8 @@ class UPIPaymentLinkAPIs(APIView):
             )
 
             payment_endpoint_data = json.loads(payment_response.content.decode("utf-8"))
-            print(payment_endpoint_data)
             serializer.validated_data["payment_link_id"] = payment_endpoint_data["id"]
+            serializer.save()
             if payment_endpoint_data["payments"] != None:
                 serializer.validated_data["paid_amount"] = payment_endpoint_data[
                     "payments"
@@ -290,6 +290,24 @@ class UPIPaymentLinkAPIs(APIView):
 
             return Response(payment_response.json(), status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UPIPaymentLinkData(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk, format=None):
+        payment = Payment.objects.get(pk=pk)
+        serializer = PaymentSerializer(payment)
+        payment_url = (
+            "https://api.razorpay.com/v1/payment_links/"
+            + serializer.data.get("payment_link_id")
+        )
+        payment_response = requests.get(
+            payment_url,
+            auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
+            headers={"Contact-Type": "application/json"},
+        )
+        return Response([serializer.data, payment_response.json()])
 
 
 class SplitPayments(APIView):

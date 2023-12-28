@@ -29,9 +29,9 @@ class SenderAuthAPI(APIView):
         serializer = SenderAuthSerializer(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data.get("email")
-            username = serializer.validated_data.get("username")
+            password = serializer.validated_data.get("password")
 
-            sender = Sender.objects.get(username=username, email=email)
+            sender = Sender.objects.get(email=email, password=password)
             if sender is None:
                 return Response(
                     {
