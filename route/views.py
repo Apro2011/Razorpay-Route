@@ -48,6 +48,7 @@ class RecieverList(APIView):
             group = RecieversGroup.objects.get(
                 name=serializer.validated_data.get("group_name")
             )
+
             serializer.save()
             reciever = Reciever.objects.get(
                 reference_id=serializer.validated_data.get("reference_id")
@@ -204,7 +205,7 @@ class RecieverList(APIView):
                                 ],
                                 status=status.HTTP_201_CREATED,
                             )
-
+        # pay_NHi3IhG1fg4qhK
         return Response(
             serializer.errors,
             status=status.HTTP_400_BAD_REQUEST,
@@ -330,8 +331,8 @@ class SplitPayments(APIView):
                 }
             )
 
-        payment_link = Payment.objects.get(pk=payment_id)
-        payment_id = payment_link.paid_payment_id
+        # payment_link = Payment.objects.get(pk=payment_id)
+        # payment_id = payment_link.paid_payment_id
 
         transfer_url = (
             "https://api.razorpay.com/v1/payments/" + payment_id + "/transfers"
