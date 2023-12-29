@@ -12,6 +12,7 @@ setuptools = "*"
 razorpay = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
+gunicorn = "*"
 
 [dev-packages]
 
