@@ -6,15 +6,25 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Create your views here.
 class SenderCreationAPI(APIView):
     @permission_classes([IsAuthenticated])
     def get(self, request, format=None):
-        senders = Sender.objects.all()
-        serializer = SenderSerializer(senders, many=True)
-        return Response(serializer.data)
+        try:
+            senders = Sender.objects.all()
+            serializer = SenderSerializer(senders, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            logger.error(f"An error occurred: {str(e)}")
+            return Response(
+                {"error": "Internal Server Error"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
     def post(self, request, format=None):
         serializer = SenderSerializer(data=request.data)

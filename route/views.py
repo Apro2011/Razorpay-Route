@@ -40,7 +40,7 @@ class RecieverList(APIView):
     def get(self, request, format=None):
         recievers = Reciever.objects.all()
         serializer = RecieverSerializer(recievers, many=True)
-        return Response(serializer.data)
+        return Response([serializer.data])
 
     def post(self, request, format=None):
         serializer = RecieverSerializer(data=request.data)
@@ -198,6 +198,7 @@ class RecieverList(APIView):
                         else:
                             return Response(
                                 [
+                                    serializer.data,
                                     account_response.json(),
                                     stakeholder_response.json(),
                                     product_config_response.json(),
@@ -289,7 +290,10 @@ class UPIPaymentLinkAPIs(APIView):
             serializer.validated_data["user_id"] = payment_endpoint_data["user_id"]
             serializer.save()
 
-            return Response(payment_response.json(), status=status.HTTP_201_CREATED)
+            return Response(
+                [serializer.data, payment_response.json()],
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 

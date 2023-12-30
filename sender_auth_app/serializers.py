@@ -5,7 +5,14 @@ from rest_framework import serializers
 class SenderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sender
-        fields = ["email", "first_name", "last_name", "password", "password2"]
+        fields = [
+            "email",
+            "first_name",
+            "last_name",
+            "password",
+            "password2",
+            "username",
+        ]
 
 
 class SenderAuthSerializer(serializers.Serializer):

@@ -13,6 +13,9 @@ razorpay = "*"
 djangorestframework-simplejwt = "*"
 django-cors-headers = "*"
 gunicorn = "*"
+django-environ = "*"
+psycopg2-binary = "*"
+google-cloud-secret-manager = "*"
 
 [dev-packages]
 
