@@ -30,8 +30,16 @@ class CreatingGroup(APIView):
         if serializer.is_valid():
             serializer.save()
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                [
+                    serializer.data,
+                    {"status": True},
+                ],
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(
+            [serializer.errors, {"status": False}], status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class RecieverList(APIView):
@@ -48,7 +56,6 @@ class RecieverList(APIView):
             group = RecieversGroup.objects.get(
                 name=serializer.validated_data.get("group_name")
             )
-
             serializer.save()
             reciever = Reciever.objects.get(
                 reference_id=serializer.validated_data.get("reference_id")
@@ -94,7 +101,10 @@ class RecieverList(APIView):
             )
 
             if account_response.status_code != 200:
-                return Response(account_response.json(), status=status.HTTP_201_CREATED)
+                return Response(
+                    [account_response.json(), {"status": False}],
+                    status=status.HTTP_201_CREATED,
+                )
             else:
                 razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
                 serializer.validated_data["razor_id"] = razor_id
@@ -127,7 +137,8 @@ class RecieverList(APIView):
 
                 if stakeholder_response.status_code != 200:
                     return Response(
-                        stakeholder_response.json(), status=status.HTTP_201_CREATED
+                        [stakeholder_response.json(), {"status": False}],
+                        status=status.HTTP_201_CREATED,
                     )
                 else:
                     product_config_url = (
@@ -149,7 +160,7 @@ class RecieverList(APIView):
 
                     if product_config_response.status_code != 200:
                         return Response(
-                            product_config_response.json(),
+                            [product_config_response.json(), {"status": False}],
                             status=status.HTTP_201_CREATED,
                         )
                     else:
@@ -192,7 +203,10 @@ class RecieverList(APIView):
 
                         if update_product_config_response.status_code != 200:
                             return Response(
-                                update_product_config_response.json(),
+                                [
+                                    update_product_config_response.json(),
+                                    {"status": False},
+                                ],
                                 status=status.HTTP_201_CREATED,
                             )
                         else:
@@ -203,12 +217,16 @@ class RecieverList(APIView):
                                     stakeholder_response.json(),
                                     product_config_response.json(),
                                     update_product_config_response.json(),
+                                    {"status": True},
                                 ],
                                 status=status.HTTP_201_CREATED,
                             )
         # pay_NHi3IhG1fg4qhK
         return Response(
-            serializer.errors,
+            [
+                serializer.errors,
+                {"status": False},
+            ],
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -232,8 +250,16 @@ class RecieverDetails(APIView):
         serializer = RecieverDetailsSerializer(reciever, data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                [
+                    serializer.data,
+                    {"status": True},
+                ]
+            )
+        return Response(
+            [serializer.errors, {"status": False}],
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class UPIPaymentLinkAPIs(APIView):
@@ -291,10 +317,17 @@ class UPIPaymentLinkAPIs(APIView):
             serializer.save()
 
             return Response(
-                [serializer.data, payment_response.json()],
+                [
+                    serializer.data,
+                    payment_response.json(),
+                    {"status": True},
+                ],
                 status=status.HTTP_201_CREATED,
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            [serializer.errors, {"status": False}],
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class UPIPaymentLinkData(APIView):
@@ -318,7 +351,13 @@ class UPIPaymentLinkData(APIView):
             payment.save()
         serializer = PaymentSerializer(payment)
 
-        return Response([serializer.data, payment_response.json()])
+        return Response(
+            [
+                serializer.data,
+                payment_response.json(),
+                {"status": True},
+            ]
+        )
 
 
 class SplitPayments(APIView):
@@ -376,4 +415,7 @@ class SplitPayments(APIView):
             json=transfer_data,
         )
 
-        return Response(transfer_response.json(), status=status.HTTP_202_ACCEPTED)
+        return Response(
+            [transfer_response.json(), {"status": True}],
+            status=status.HTTP_202_ACCEPTED,
+        )

@@ -30,8 +30,20 @@ class SenderCreationAPI(APIView):
         serializer = SenderSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                [
+                    serializer.data,
+                    {"status": True},
+                ],
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(
+            [
+                serializer.errors,
+                {"status": False},
+            ],
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class SenderAuthAPI(APIView):
@@ -48,6 +60,7 @@ class SenderAuthAPI(APIView):
                         "status": 400,
                         "message": "Sender doesn't exist",
                         "data": serializer.errors,
+                        "status": False,
                     }
                 )
 
@@ -57,6 +70,7 @@ class SenderAuthAPI(APIView):
                 {
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
+                    "status": True,
                 }
             )
 
@@ -65,6 +79,7 @@ class SenderAuthAPI(APIView):
                 "status": 400,
                 "message": "something went wrong",
                 "data": serializer.errors,
+                "status": False,
             }
         )
 
@@ -78,6 +93,6 @@ class SenderLogoutView(APIView):
             token = RefreshToken(refresh_token)
             token.blacklist()
 
-            return Response(status=status.HTTP_205_RESET_CONTENT)
+            return Response({"status": True}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response({"status": False}, status=status.HTTP_400_BAD_REQUEST)
