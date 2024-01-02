@@ -31,14 +31,18 @@ class CreatingGroup(APIView):
             serializer.save()
 
             return Response(
-                [
-                    serializer.data,
-                    {"status": True},
-                ],
+                {
+                    "data": serializer.data,
+                    "status": True,
+                },
                 status=status.HTTP_201_CREATED,
             )
         return Response(
-            [serializer.errors, {"status": False}], status=status.HTTP_400_BAD_REQUEST
+            {
+                "data": serializer.errors,
+                "status": False,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
@@ -102,7 +106,10 @@ class RecieverList(APIView):
 
             if account_response.status_code != 200:
                 return Response(
-                    [account_response.json(), {"status": False}],
+                    {
+                        "data": account_response.json(),
+                        "status": False,
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             else:
@@ -137,7 +144,10 @@ class RecieverList(APIView):
 
                 if stakeholder_response.status_code != 200:
                     return Response(
-                        [stakeholder_response.json(), {"status": False}],
+                        {
+                            "data": stakeholder_response.json(),
+                            "status": False,
+                        },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 else:
@@ -160,7 +170,10 @@ class RecieverList(APIView):
 
                     if product_config_response.status_code != 200:
                         return Response(
-                            [product_config_response.json(), {"status": False}],
+                            {
+                                "data": product_config_response.json(),
+                                "status": False,
+                            },
                             status=status.HTTP_400_BAD_REQUEST,
                         )
                     else:
@@ -203,30 +216,32 @@ class RecieverList(APIView):
 
                         if update_product_config_response.status_code != 200:
                             return Response(
-                                [
-                                    update_product_config_response.json(),
-                                    {"status": False},
-                                ],
+                                {
+                                    "data": update_product_config_response.json(),
+                                    "status": False,
+                                },
                                 status=status.HTTP_400_BAD_REQUEST,
                             )
                         else:
                             return Response(
-                                [
-                                    serializer.data,
-                                    account_response.json(),
-                                    stakeholder_response.json(),
-                                    product_config_response.json(),
-                                    update_product_config_response.json(),
-                                    {"status": True},
-                                ],
+                                {
+                                    "data": [
+                                        serializer.data,
+                                        account_response.json(),
+                                        stakeholder_response.json(),
+                                        product_config_response.json(),
+                                        update_product_config_response.json(),
+                                    ],
+                                    "status": True,
+                                },
                                 status=status.HTTP_201_CREATED,
                             )
         # pay_NHi3IhG1fg4qhK
         return Response(
-            [
-                serializer.errors,
-                {"status": False},
-            ],
+            {
+                "data": serializer.errors,
+                "status": False,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -251,14 +266,17 @@ class RecieverDetails(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                [
-                    serializer.data,
-                    {"status": True},
-                ],
+                {
+                    "data": serializer.data,
+                    "status": True,
+                },
                 status=status.HTTP_202_ACCEPTED,
             )
         return Response(
-            [serializer.errors, {"status": False}],
+            {
+                "data": serializer.errors,
+                "status": False,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -302,10 +320,10 @@ class UPIPaymentLinkAPIs(APIView):
 
             if payment_response.status_code != 200:
                 return Response(
-                    [
-                        payment_response.json(),
-                        {"status": False},
-                    ],
+                    {
+                        "data": payment_response.json(),
+                        "status": False,
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             else:
@@ -333,15 +351,17 @@ class UPIPaymentLinkAPIs(APIView):
                 serializer.save()
 
                 return Response(
-                    [
-                        serializer.data,
-                        payment_response.json(),
-                        {"status": True},
-                    ],
+                    {
+                        "data": [serializer.data, payment_response.json()],
+                        "status": True,
+                    },
                     status=status.HTTP_201_CREATED,
                 )
         return Response(
-            [serializer.errors, {"status": False}],
+            {
+                "data": serializer.errors,
+                "status": False,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -362,7 +382,10 @@ class UPIPaymentLinkData(APIView):
 
         if payment_response.status_code != 200:
             return Response(
-                [payment_response.json(), {"status": False}],
+                {
+                    "data": payment_response.json(),
+                    "status": False,
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
         else:
@@ -376,11 +399,10 @@ class UPIPaymentLinkData(APIView):
             serializer = PaymentSerializer(payment)
 
             return Response(
-                [
-                    serializer.data,
-                    payment_response.json(),
-                    {"status": True},
-                ],
+                {
+                    "data": [serializer.data, payment_response.json()],
+                    "status": True,
+                },
                 status=status.HTTP_200_OK,
             )
 
@@ -406,7 +428,10 @@ class SplitPayments(APIView):
 
         if percentage_sum != 100:
             return Response(
-                {"message": "Sum of percentages should be equal to 100"},
+                {
+                    "message": "Sum of percentages should be equal to 100",
+                    "status": False,
+                },
                 status=status.HTTP_412_PRECONDITION_FAILED,
             )
 
@@ -442,10 +467,16 @@ class SplitPayments(APIView):
 
         if transfer_response.status_code != 200:
             return Response(
-                [transfer_response.json(), {"status": False}],
+                {
+                    "data": transfer_response.json(),
+                    "status": False,
+                },
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
         return Response(
-            [transfer_response.json(), {"status": True}],
+            {
+                "data": transfer_response.json(),
+                "status": True,
+            },
             status=status.HTTP_202_ACCEPTED,
         )

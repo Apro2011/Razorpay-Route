@@ -31,17 +31,17 @@ class SenderCreationAPI(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(
-                [
-                    serializer.data,
-                    {"status": True},
-                ],
+                {
+                    "data": serializer.data,
+                    "status": True,
+                },
                 status=status.HTTP_201_CREATED,
             )
         return Response(
-            [
-                serializer.errors,
-                {"status": False},
-            ],
+            {
+                "data": serializer.errors,
+                "status": False,
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -76,11 +76,11 @@ class SenderAuthAPI(APIView):
 
         return Response(
             {
-                "status": 400,
                 "message": "something went wrong",
                 "data": serializer.errors,
                 "status": False,
-            }
+            },
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
