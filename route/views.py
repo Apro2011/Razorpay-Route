@@ -103,7 +103,7 @@ class RecieverList(APIView):
             if account_response.status_code != 200:
                 return Response(
                     [account_response.json(), {"status": False}],
-                    status=status.HTTP_201_CREATED,
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             else:
                 razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
@@ -138,7 +138,7 @@ class RecieverList(APIView):
                 if stakeholder_response.status_code != 200:
                     return Response(
                         [stakeholder_response.json(), {"status": False}],
-                        status=status.HTTP_201_CREATED,
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
                 else:
                     product_config_url = (
@@ -161,7 +161,7 @@ class RecieverList(APIView):
                     if product_config_response.status_code != 200:
                         return Response(
                             [product_config_response.json(), {"status": False}],
-                            status=status.HTTP_201_CREATED,
+                            status=status.HTTP_400_BAD_REQUEST,
                         )
                     else:
                         product_id = json.loads(
@@ -207,7 +207,7 @@ class RecieverList(APIView):
                                     update_product_config_response.json(),
                                     {"status": False},
                                 ],
-                                status=status.HTTP_201_CREATED,
+                                status=status.HTTP_400_BAD_REQUEST,
                             )
                         else:
                             return Response(
@@ -254,7 +254,8 @@ class RecieverDetails(APIView):
                 [
                     serializer.data,
                     {"status": True},
-                ]
+                ],
+                status=status.HTTP_202_ACCEPTED,
             )
         return Response(
             [serializer.errors, {"status": False}],
@@ -299,31 +300,46 @@ class UPIPaymentLinkAPIs(APIView):
                 json=payment_data,
             )
 
-            payment_endpoint_data = json.loads(payment_response.content.decode("utf-8"))
-            serializer.validated_data["payment_link_id"] = payment_endpoint_data["id"]
-            if payment_endpoint_data["payments"] != None:
-                serializer.validated_data["paid_amount"] = payment_endpoint_data[
-                    "payments"
-                ][0]["amount"]
-                serializer.validated_data["paid_payment_id"] = payment_endpoint_data[
-                    "payments"
-                ][0]["payment_id"]
-                serializer.validated_data["paid_plink_id"] = payment_endpoint_data[
-                    "payments"
-                ][0]["plink_id"]
+            if payment_response.status_code != 200:
+                return Response(
+                    [
+                        payment_response.json(),
+                        {"status": False},
+                    ],
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            else:
+                payment_endpoint_data = json.loads(
+                    payment_response.content.decode("utf-8")
+                )
+                serializer.validated_data["payment_link_id"] = payment_endpoint_data[
+                    "id"
+                ]
+                if payment_endpoint_data["payments"] != None:
+                    serializer.validated_data["paid_amount"] = payment_endpoint_data[
+                        "payments"
+                    ][0]["amount"]
+                    serializer.validated_data[
+                        "paid_payment_id"
+                    ] = payment_endpoint_data["payments"][0]["payment_id"]
+                    serializer.validated_data["paid_plink_id"] = payment_endpoint_data[
+                        "payments"
+                    ][0]["plink_id"]
 
-            serializer.validated_data["short_url"] = payment_endpoint_data["short_url"]
-            serializer.validated_data["user_id"] = payment_endpoint_data["user_id"]
-            serializer.save()
+                serializer.validated_data["short_url"] = payment_endpoint_data[
+                    "short_url"
+                ]
+                serializer.validated_data["user_id"] = payment_endpoint_data["user_id"]
+                serializer.save()
 
-            return Response(
-                [
-                    serializer.data,
-                    payment_response.json(),
-                    {"status": True},
-                ],
-                status=status.HTTP_201_CREATED,
-            )
+                return Response(
+                    [
+                        serializer.data,
+                        payment_response.json(),
+                        {"status": True},
+                    ],
+                    status=status.HTTP_201_CREATED,
+                )
         return Response(
             [serializer.errors, {"status": False}],
             status=status.HTTP_400_BAD_REQUEST,
@@ -344,20 +360,29 @@ class UPIPaymentLinkData(APIView):
             headers={"Contact-Type": "application/json"},
         )
 
-        payment_endpoint_data = json.loads(payment_response.content.decode("utf-8"))
-        if payment_endpoint_data["payments"] != None:
-            payment.paid_amount = payment_endpoint_data["payments"][0]["amount"]
-            payment.paid_payment_id = payment_endpoint_data["payments"][0]["payment_id"]
-            payment.save()
-        serializer = PaymentSerializer(payment)
+        if payment_response.status_code != 200:
+            return Response(
+                [payment_response.json(), {"status": False}],
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            payment_endpoint_data = json.loads(payment_response.content.decode("utf-8"))
+            if payment_endpoint_data["payments"] != None:
+                payment.paid_amount = payment_endpoint_data["payments"][0]["amount"]
+                payment.paid_payment_id = payment_endpoint_data["payments"][0][
+                    "payment_id"
+                ]
+                payment.save()
+            serializer = PaymentSerializer(payment)
 
-        return Response(
-            [
-                serializer.data,
-                payment_response.json(),
-                {"status": True},
-            ]
-        )
+            return Response(
+                [
+                    serializer.data,
+                    payment_response.json(),
+                    {"status": True},
+                ],
+                status=status.HTTP_200_OK,
+            )
 
 
 class SplitPayments(APIView):
@@ -415,6 +440,11 @@ class SplitPayments(APIView):
             json=transfer_data,
         )
 
+        if transfer_response.status_code != 200:
+            return Response(
+                [transfer_response.json(), {"status": False}],
+                status=status.HTTP_406_NOT_ACCEPTABLE,
+            )
         return Response(
             [transfer_response.json(), {"status": True}],
             status=status.HTTP_202_ACCEPTED,
