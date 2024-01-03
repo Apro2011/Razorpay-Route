@@ -3,6 +3,8 @@ env: standard
 entrypoint: gunicorn -b :$PORT core.wsgi:application
 
 handlers:
+- url: /media
+  static_dir: mediafiles/
 - url: /.*
   script: auto
 

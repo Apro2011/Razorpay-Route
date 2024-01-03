@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 # Create your views here.
 class SenderCreationAPI(APIView):
     @permission_classes([IsAuthenticated])
-    def get(self, request, format=None):
+    def put(self, request, format=None):
         try:
             senders = Sender.objects.all()
             serializer = SenderSerializer(senders, many=True)
@@ -52,12 +52,11 @@ class SenderAuthAPI(APIView):
         if serializer.is_valid():
             email = serializer.validated_data.get("email")
             password = serializer.validated_data.get("password")
-
-            sender = Sender.objects.get(email=email, password=password)
-            if sender is None:
+            try:
+                sender = Sender.objects.get(email=email, password=password)
+            except Exception as e:
                 return Response(
                     {
-                        "status": 400,
                         "message": "Sender doesn't exist",
                         "data": serializer.errors,
                         "status": False,

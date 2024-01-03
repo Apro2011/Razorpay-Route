@@ -14,25 +14,41 @@ import json
 import requests
 from core import settings
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import FormParser, MultiPartParser
 
 
 # Create your views here.
 class CreatingGroup(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
-    def get(self, request, format=None):
+    def put(self, request, format=None):
         groups = RecieversGroup.objects.all()
-        serializer = RecieversGroupSerializer(groups, many=True)
-        return Response(serializer.data)
+        data = [
+            {
+                "id": group.pk,
+                "name": group.name,
+                "photo": request.build_absolute_uri(group.photo.url)
+                if group.photo
+                else None,
+            }
+            for group in groups
+        ]
+        return Response({"data": data})
 
     def post(self, request, format=None):
         serializer = RecieversGroupSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            group = RecieversGroup.objects.get(
+                name=serializer.validated_data.get("name")
+            )
+            group.photo = request.data.get("file")
+            group.save()
 
             return Response(
                 {
-                    "data": serializer.data,
+                    "data": [serializer.data],
                     "status": True,
                 },
                 status=status.HTTP_201_CREATED,
@@ -49,7 +65,7 @@ class CreatingGroup(APIView):
 class RecieverList(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, format=None):
+    def put(self, request, format=None):
         recievers = Reciever.objects.all()
         serializer = RecieverSerializer(recievers, many=True)
         return Response([serializer.data])
@@ -284,7 +300,7 @@ class RecieverDetails(APIView):
 class UPIPaymentLinkAPIs(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, format=None):
+    def put(self, request, format=None):
         payments = Payment.objects.all()
         serializer = PaymentSerializer(payments, many=True)
         return Response(serializer.data)

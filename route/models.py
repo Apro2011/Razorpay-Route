@@ -4,6 +4,7 @@ from django.db import models
 # Create your models here.
 class RecieversGroup(models.Model):
     name = models.CharField(max_length=200, unique=True)
+    photo = models.ImageField(upload_to="", null=True, blank=True)
 
 
 class Reciever(models.Model):

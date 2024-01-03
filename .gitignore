@@ -1,3 +1,4 @@
 .env
 db.sqlite3
 rzp.csv
+gcpCredentials.json

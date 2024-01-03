@@ -18,7 +18,9 @@ import environ
 from urllib.parse import urlparse
 from pathlib import Path
 import io
+
 from google.cloud import secretmanager
+from google.oauth2 import service_account
 
 load_dotenv()
 
@@ -27,6 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env(DEBUG=(bool, False))
 env_file = os.path.join(BASE_DIR, ".env")
+# env.read_env(env_file)
 
 if os.path.isfile(env_file):
     # read a local .env file
@@ -188,3 +191,14 @@ SIMPLE_JWT = {
 }
 
 AUTH_USER_MODEL = "sender_auth_app.Sender"
+
+GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
+    os.path.join(BASE_DIR, "gcpCredentials.json")
+)
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "mediafiles"
+
+DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+# STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+GS_BUCKET_NAME = env("GS_BUCKET_NAME")
