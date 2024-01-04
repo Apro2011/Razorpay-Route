@@ -38,12 +38,14 @@ class SenderCreationAPI(APIView):
             )
             sender.photo = request.data.get("file")
             sender.save()
+            refresh = RefreshToken.for_user(sender)
             return Response(
                 {
-                    "data": [
-                        serializer.data,
-                        request.build_absolute_uri(sender.photo.url),
-                    ],
+                    "data": {
+                        "data": serializer.data,
+                        "image_url": request.build_absolute_uri(sender.photo.url),
+                        "access": str(refresh.access_token),
+                    },
                     "status": True,
                 },
                 status=status.HTTP_201_CREATED,
