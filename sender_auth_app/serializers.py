@@ -12,6 +12,7 @@ class SenderSerializer(serializers.ModelSerializer):
             "password",
             "password2",
             "username",
+            "photo_url",
         ]
 
 

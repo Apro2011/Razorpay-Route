@@ -9,6 +9,7 @@ class RecieversGroup(models.Model):
     )
     name = models.CharField(max_length=200, unique=True)
     photo = models.ImageField(upload_to="", null=True, blank=True)
+    photo_url = models.URLField(null=True, blank=True)
 
 
 class Reciever(models.Model):
@@ -18,7 +19,7 @@ class Reciever(models.Model):
     main_id = models.BigAutoField(unique=True, primary_key=True)
     email = models.EmailField(max_length=250, unique=True)
     phone = models.CharField(max_length=15)
-    type = models.CharField(max_length=20)
+    type = models.CharField(max_length=20, default="route")
     reference_id = models.CharField(max_length=20, unique=True, null=True, blank=True)
     legal_business_name = models.CharField(max_length=250)
     business_type = models.CharField(max_length=250, default="individual")
@@ -37,9 +38,9 @@ class Reciever(models.Model):
     gst = models.CharField(max_length=100, null=True, blank=True)
     razor_id = models.CharField(max_length=100, null=True, blank=True)
     group_name = models.CharField(max_length=100, null=True, blank=True)
-    tnc_accepted = models.BooleanField(default=False)
+    tnc_accepted = models.BooleanField(default=True)
     product_id = models.CharField(max_length=100, null=True, blank=True)
-    product_name = models.CharField(max_length=100)
+    product_name = models.CharField(max_length=100, default="route")
     account_number = models.CharField(max_length=250, null=True, blank=True)
     ifsc_code = models.CharField(max_length=20, null=True, blank=True)
 
@@ -47,6 +48,8 @@ class Reciever(models.Model):
     groups = models.ManyToManyField(
         RecieversGroup, related_name="reciever_recievergroups", blank=True
     )
+    photo = models.ImageField(upload_to="", null=True, blank=True)
+    photo_url = models.URLField(null=True, blank=True)
 
 
 class Payment(models.Model):

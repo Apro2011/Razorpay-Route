@@ -7,12 +7,15 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 import logging
+from rest_framework.parsers import FormParser, MultiPartParser
 
 logger = logging.getLogger(__name__)
 
 
 # Create your views here.
 class SenderCreationAPI(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
     @permission_classes([IsAuthenticated])
     def put(self, request, format=None):
         try:
@@ -30,9 +33,17 @@ class SenderCreationAPI(APIView):
         serializer = SenderSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
+            sender = Sender.objects.get(
+                username=serializer.validated_data.get("username")
+            )
+            sender.photo = request.data.get("file")
+            sender.save()
             return Response(
                 {
-                    "data": serializer.data,
+                    "data": [
+                        serializer.data,
+                        request.build_absolute_uri(sender.photo.url),
+                    ],
                     "status": True,
                 },
                 status=status.HTTP_201_CREATED,

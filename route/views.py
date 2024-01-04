@@ -23,7 +23,20 @@ class CreatingGroup(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def put(self, request, format=None):
-        groups = RecieversGroup.objects.filter(created_by=request.context.user)
+        groups = RecieversGroup.objects.filter(created_by=request.user)
+        for group in groups:
+            # Retrieve related Reciever instances for the current group
+            recievers = Reciever.objects.filter(group_name=group.name)
+
+            # Serialize Reciever instances (you can replace this with your serializer logic)
+            reciever_data = [
+                {
+                    "id": reciever.main_id,
+                    "email": reciever.email,
+                    "reference_id": reciever.reference_id,
+                }
+                for reciever in recievers
+            ]
         data = [
             {
                 "id": group.pk,
@@ -34,11 +47,12 @@ class CreatingGroup(APIView):
             }
             for group in groups
         ]
-        return Response({"data": data})
+        return Response({"data": data, "related_recievers": reciever_data})
 
     def post(self, request, format=None):
         serializer = RecieversGroupSerializer(data=request.data)
         if serializer.is_valid():
+            serializer.validated_data["created_by"] = request.user
             serializer.save()
             group = RecieversGroup.objects.get(
                 name=serializer.validated_data.get("name")
@@ -48,10 +62,10 @@ class CreatingGroup(APIView):
 
             return Response(
                 {
-                    "data": [
-                        serializer.data,
-                        request.build_absolute_uri(group.photo.url),
-                    ],
+                    "data": {
+                        "data": serializer.data,
+                        "image_url": request.build_absolute_uri(group.photo.url),
+                    },
                     "status": True,
                 },
                 status=status.HTTP_201_CREATED,
@@ -67,15 +81,30 @@ class CreatingGroup(APIView):
 
 class RecieverList(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
 
     def put(self, request, format=None):
-        recievers = Reciever.objects.all()
+        recievers = Reciever.objects.filter(created_by=request.user)
         serializer = RecieverSerializer(recievers, many=True)
-        return Response([serializer.data])
+
+        image = [
+            {
+                "id": reciever.pk,
+                "photo": request.build_absolute_uri(reciever.photo.url)
+                if reciever.photo
+                else None,
+            }
+            for reciever in recievers
+        ]
+        return Response(
+            {"data": {"data": serializer.data, "photo_url": image}, "status": True},
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request, format=None):
         serializer = RecieverSerializer(data=request.data)
         if serializer.is_valid():
+            serializer.validated_data["created_by"] = request.user
             group = RecieversGroup.objects.get(
                 name=serializer.validated_data.get("group_name")
             )
@@ -84,6 +113,8 @@ class RecieverList(APIView):
                 reference_id=serializer.validated_data.get("reference_id")
             )
             reciever.groups.add(group)
+            reciever.photo = request.data.get("file")
+            reciever.save()
             # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"
             account_data = {
@@ -179,9 +210,7 @@ class RecieverList(APIView):
                         "product_name": serializer.validated_data.get(
                             "product_name", "route"
                         ),
-                        "tnc_accepted": serializer.validated_data.get(
-                            "tnc_accepted", True
-                        ),
+                        "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
                     }
 
                     product_config_response = requests.post(
@@ -226,8 +255,7 @@ class RecieverList(APIView):
                                 ),
                             },
                             "tnc_accepted": serializer.validated_data.get(
-                                "tnc_accepted",
-                                True,
+                                "tnc_accepted"
                             ),
                         }
 
@@ -250,7 +278,12 @@ class RecieverList(APIView):
                             return Response(
                                 {
                                     "data": [
-                                        serializer.data,
+                                        {
+                                            "data": serializer.data,
+                                            "image_url": request.build_absolute_uri(
+                                                reciever.photo.url
+                                            ),
+                                        },
                                         account_response.json(),
                                         stakeholder_response.json(),
                                         product_config_response.json(),
@@ -309,13 +342,14 @@ class UPIPaymentLinkAPIs(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, format=None):
-        payments = Payment.objects.all()
+        payments = Payment.objects.filter(created_by=request.user)
         serializer = PaymentSerializer(payments, many=True)
         return Response(serializer.data)
 
     def post(self, request, format=None):
         serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
+            serializer.validated_data["created_by"] = request.user
             serializer.save()
 
             # Create UPI Payment Link
