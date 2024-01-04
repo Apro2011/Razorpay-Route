@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f31a4b278c743f03bda73856cd9cfbdd4906eff672659f6fd6030120b62f9507"
+            "sha256": "36e7881fe8b5672514074fb4c06d91c497973fdbf3240634c0875ea70c3d7823"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -23,6 +23,14 @@
             ],
             "markers": "python_version >= '3.7'",
             "version": "==3.7.2"
+        },
+        "beautifulsoup4": {
+            "hashes": [
+                "sha256:492bbc69dca35d12daac71c4db1bfff0c876c00ef4a2ffacce226d4638eb72da",
+                "sha256:bd2520ca0d9d7d12694a53d44ac482d181b4ec1888909b035a3dbf40d0f57d4a"
+            ],
+            "markers": "python_full_version >= '3.6.0'",
+            "version": "==4.12.2"
         },
         "cachetools": {
             "hashes": [
@@ -192,6 +200,14 @@
             "markers": "python_version >= '3.8'",
             "version": "==5.3.1"
         },
+        "google": {
+            "hashes": [
+                "sha256:143530122ee5130509ad5e989f0512f7cb218b2d4eddbafbad40fd10e8d8ccbe",
+                "sha256:889cf695f84e4ae2c55fbc0cfdaf4c1e729417fa52ab1db0485202ba173e4935"
+            ],
+            "index": "pypi",
+            "version": "==3.0.0"
+        },
         "google-api-core": {
             "extras": [
                 "grpc"
@@ -205,11 +221,11 @@
         },
         "google-auth": {
             "hashes": [
-                "sha256:11f56129d30902cc9f4b93ed0c84ef7323f7328e6520eab1716740f3171afe35",
-                "sha256:5d8bf0a5143baa45368c3d08bf157babda468db1c5dd987cd2c824b788524196"
+                "sha256:2c8b55e3e564f298122a02ab7b97458ccfcc5617840beb5d0ac757ada92c9780",
+                "sha256:54385acca5c0fbdda510cd8585ba6f3fcb06eeecf8a6ecca39d3ee148b092590"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==2.26.0"
+            "version": "==2.26.1"
         },
         "google-cloud-core": {
             "hashes": [
@@ -681,6 +697,14 @@
             "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==69.0.3"
+        },
+        "soupsieve": {
+            "hashes": [
+                "sha256:5663d5a7b3bfaeee0bc4372e7fc48f9cff4940b3eec54a6451cc5299f1097690",
+                "sha256:eaa337ff55a1579b6549dc679565eac1e3d000563bcb1c8ab0d0fefbc0c2cdc7"
+            ],
+            "markers": "python_version >= '3.8'",
+            "version": "==2.5"
         },
         "sqlparse": {
             "hashes": [

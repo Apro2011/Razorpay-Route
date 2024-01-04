@@ -19,6 +19,7 @@ google-cloud-secret-manager = "*"
 django-storages = {extras = ["google"], version = "*"}
 google-cloud-storage = "*"
 pillow = "*"
+google = "*"
 
 [dev-packages]
 

@@ -23,7 +23,7 @@ class CreatingGroup(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def put(self, request, format=None):
-        groups = RecieversGroup.objects.all()
+        groups = RecieversGroup.objects.filter(created_by=request.context.user)
         data = [
             {
                 "id": group.pk,
@@ -48,7 +48,10 @@ class CreatingGroup(APIView):
 
             return Response(
                 {
-                    "data": [serializer.data],
+                    "data": [
+                        serializer.data,
+                        request.build_absolute_uri(group.photo.url),
+                    ],
                     "status": True,
                 },
                 status=status.HTTP_201_CREATED,
@@ -86,7 +89,7 @@ class RecieverList(APIView):
             account_data = {
                 "email": serializer.validated_data.get("email"),
                 "phone": serializer.validated_data.get("phone"),
-                "type": serializer.validated_data.get("type"),
+                "type": serializer.validated_data.get("type", "route"),
                 "reference_id": serializer.validated_data.get("reference_id"),
                 "legal_business_name": serializer.validated_data.get(
                     "legal_business_name"
@@ -173,8 +176,12 @@ class RecieverList(APIView):
 
                     # Request Product Configuration
                     product_config_data = {
-                        "product_name": serializer.validated_data.get("product_name"),
-                        "tnc_accepted": serializer.validated_data.get("tnc_accepted"),
+                        "product_name": serializer.validated_data.get(
+                            "product_name", "route"
+                        ),
+                        "tnc_accepted": serializer.validated_data.get(
+                            "tnc_accepted", True
+                        ),
                     }
 
                     product_config_response = requests.post(
@@ -219,7 +226,8 @@ class RecieverList(APIView):
                                 ),
                             },
                             "tnc_accepted": serializer.validated_data.get(
-                                "tnc_accepted"
+                                "tnc_accepted",
+                                True,
                             ),
                         }
 

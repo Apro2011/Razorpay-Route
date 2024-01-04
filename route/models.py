@@ -1,13 +1,20 @@
 from django.db import models
+from sender_auth_app.models import Sender
 
 
 # Create your models here.
 class RecieversGroup(models.Model):
+    created_by = models.ForeignKey(
+        Sender, on_delete=models.CASCADE, null=True, blank=True
+    )
     name = models.CharField(max_length=200, unique=True)
     photo = models.ImageField(upload_to="", null=True, blank=True)
 
 
 class Reciever(models.Model):
+    created_by = models.ForeignKey(
+        Sender, on_delete=models.CASCADE, null=True, blank=True
+    )
     main_id = models.BigAutoField(unique=True, primary_key=True)
     email = models.EmailField(max_length=250, unique=True)
     phone = models.CharField(max_length=15)
@@ -43,6 +50,9 @@ class Reciever(models.Model):
 
 
 class Payment(models.Model):
+    created_by = models.ForeignKey(
+        Sender, on_delete=models.CASCADE, null=True, blank=True
+    )
     upi_link = models.BooleanField(default=True)
     amount = models.IntegerField()
     currency = models.CharField(max_length=10, default="INR")
