@@ -9,5 +9,8 @@ urlpatterns = [
     path("split-payments/", views.SplitPayments.as_view()),
     path("upipaymentlink/", views.UPIPaymentLinkAPIs.as_view()),
     path("paymentlinkdata/<int:pk>/", views.UPIPaymentLinkData.as_view()),
+    path("group-data/<int:pk>/", views.GroupData.as_view()),
 ]
+
+
 urlpatterns = format_suffix_patterns(urlpatterns)

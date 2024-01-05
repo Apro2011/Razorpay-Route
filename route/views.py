@@ -24,24 +24,13 @@ class CreatingGroup(APIView):
 
     def put(self, request, format=None):
         groups = RecieversGroup.objects.filter(created_by=request.user)
-        for group in groups:
-            # Retrieve related Reciever instances for the current group
-            recievers = Reciever.objects.filter(group_name=group.name)
 
-            # Serialize Reciever instances (you can replace this with your serializer logic)
-            reciever_data = [
-                {
-                    "id": reciever.main_id,
-                    "email": reciever.email,
-                    "reference_id": reciever.reference_id,
-                }
-                for reciever in recievers
-            ]
-        data = [
-            {"id": group.pk, "name": group.name, "photo": group.photo_url}
-            for group in groups
-        ]
-        return Response({"data": data, "related_recievers": reciever_data})
+        serializer = RecieversGroupSerializer(groups, many=True)
+
+        return Response(
+            {"data": serializer.data, "status": True},
+            status=status.HTTP_200_OK,
+        )
 
     def post(self, request, format=None):
         serializer = RecieversGroupSerializer(data=request.data)
@@ -53,15 +42,14 @@ class CreatingGroup(APIView):
             )
             group.photo = request.data.get("file")
             group.save()
-            group.photo_url = request.build_absolute_uri(group.photo.url)
-            group.save()
+            serializer.validated_data["photo_url"] = request.build_absolute_uri(
+                group.photo.url
+            )
+            serializer.save()
 
             return Response(
                 {
-                    "data": {
-                        "data": serializer.data,
-                        "image_url": group.photo_url,
-                    },
+                    "data": serializer.data,
                     "status": True,
                 },
                 status=status.HTTP_201_CREATED,
@@ -75,6 +63,23 @@ class CreatingGroup(APIView):
         )
 
 
+class GroupData(APIView):
+    def put(self, request, pk, format=None):
+        group = RecieversGroup.objects.get(pk=pk)
+        recievers = Reciever.objects.filter(group_name=group.name)
+        serializer1 = RecieversGroupSerializer(group)
+        serializer2 = RecieverSerializer(recievers, many=True)
+
+        return Response(
+            {
+                "group": serializer1.data,
+                "related_recievers": serializer2.data,
+                "status": True,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
 class RecieverList(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
@@ -83,15 +88,8 @@ class RecieverList(APIView):
         recievers = Reciever.objects.filter(created_by=request.user)
         serializer = RecieverSerializer(recievers, many=True)
 
-        image = [
-            {
-                "id": reciever.pk,
-                "photo": reciever.photo_url,
-            }
-            for reciever in recievers
-        ]
         return Response(
-            {"data": {"data": serializer.data, "photo_url": image}, "status": True},
+            {"data": serializer.data, "status": True},
             status=status.HTTP_200_OK,
         )
 
@@ -106,11 +104,14 @@ class RecieverList(APIView):
             reciever = Reciever.objects.get(
                 reference_id=serializer.validated_data.get("reference_id")
             )
-            reciever.groups.add(group)
+            reciever.group = group
+            reciever.save()
             reciever.photo = request.data.get("file")
             reciever.save()
-            reciever.photo_url = request.build_absolute_uri(reciever.photo.url)
-            reciever.save()
+            serializer.validated_data["photo_url"] = request.build_absolute_uri(
+                reciever.photo.url
+            )
+            serializer.save()
             # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"
             account_data = {
@@ -273,16 +274,15 @@ class RecieverList(APIView):
                         else:
                             return Response(
                                 {
-                                    "data": [
-                                        {
-                                            "data": serializer.data,
-                                            "image_url": reciever.photo_url,
-                                        },
-                                        account_response.json(),
-                                        stakeholder_response.json(),
-                                        product_config_response.json(),
-                                        update_product_config_response.json(),
-                                    ],
+                                    "data": {
+                                        "database_data": serializer.data,
+                                        "razorpay_data": [
+                                            account_response.json(),
+                                            stakeholder_response.json(),
+                                            product_config_response.json(),
+                                            update_product_config_response.json(),
+                                        ],
+                                    },
                                     "status": True,
                                 },
                                 status=status.HTTP_201_CREATED,
@@ -306,10 +306,16 @@ class RecieverDetails(APIView):
         except Reciever.DoesNotExist:
             raise Http404
 
-    def get(self, request, pk, format=None):
+    def options(self, request, pk, format=None):
         reciever = self.get_object(pk=pk)
         serializer = RecieverSerializer(reciever)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "data": serializer.data,
+                "status": True,
+            },
+            status=status.HTTP_200_OK,
+        )
 
     def put(self, request, pk, format=None):
         reciever = self.get_object(pk=pk)
@@ -320,18 +326,9 @@ class RecieverDetails(APIView):
         )
         if serializer.is_valid():
             serializer.save()
-            image = [
-                {
-                    "id": reciever.pk,
-                    "photo": reciever.photo_url,
-                }
-            ]
             return Response(
                 {
-                    "data": {
-                        "data": serializer.data,
-                        "image_url": image,
-                    },
+                    "data": serializer.data,
                     "status": True,
                 },
                 status=status.HTTP_202_ACCEPTED,

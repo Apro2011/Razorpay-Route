@@ -8,6 +8,7 @@ from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 import logging
 from rest_framework.parsers import FormParser, MultiPartParser
+from django.http import Http404
 
 logger = logging.getLogger(__name__)
 
@@ -18,16 +19,9 @@ class SenderCreationAPI(APIView):
 
     @permission_classes([IsAuthenticated])
     def put(self, request, format=None):
-        try:
-            senders = Sender.objects.all()
-            serializer = SenderSerializer(senders, many=True)
-            return Response(serializer.data)
-        except Exception as e:
-            logger.error(f"An error occurred: {str(e)}")
-            return Response(
-                {"error": "Internal Server Error"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+        senders = Sender.objects.all()
+        serializer = SenderSerializer(senders, many=True)
+        return Response(serializer.data)
 
     def post(self, request, format=None):
         serializer = SenderSerializer(data=request.data)
@@ -38,14 +32,15 @@ class SenderCreationAPI(APIView):
             )
             sender.photo = request.data.get("file")
             sender.save()
-            sender.photo_url = request.build_absolute_uri(sender.photo.url)
-            sender.save()
+            serializer.validated_data["photo_url"] = request.build_absolute_uri(
+                sender.photo.url
+            )
+            serializer.save()
             refresh = RefreshToken.for_user(sender)
             return Response(
                 {
                     "data": {
                         "data": serializer.data,
-                        "image_url": sender.photo_url,
                         "access": str(refresh.access_token),
                     },
                     "status": True,
@@ -61,6 +56,52 @@ class SenderCreationAPI(APIView):
         )
 
 
+class SenderDetailsAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return Sender.objects.get(pk=pk)
+        except Sender.DoesNotExist:
+            raise Http404
+
+    def options(self, request, format=None):
+        sender = self.get_object(pk=request.user.pk)
+        serializer = SenderSerializer(sender)
+        return Response(
+            {
+                "data": serializer.data,
+                "status": True,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    def put(self, request, format=None):
+        sender = self.get_object(pk=request.user.pk)
+        serializer = SenderSerializer(
+            sender,
+            data=request.data,
+            partial=True,
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                {
+                    "data": serializer.data,
+                    "status": True,
+                },
+                status=status.HTTP_200_OK,
+            )
+        else:
+            return Response(
+                {
+                    "error": serializer.errors,
+                    "status": False,
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
 class SenderAuthAPI(APIView):
     def post(self, request, format=None):
         serializer = SenderAuthSerializer(data=request.data)
@@ -69,7 +110,6 @@ class SenderAuthAPI(APIView):
             password = serializer.validated_data.get("password")
             try:
                 sender = Sender.objects.get(email=email, password=password)
-                print(sender.photo_url)
             except Exception as e:
                 return Response(
                     {
@@ -90,7 +130,6 @@ class SenderAuthAPI(APIView):
                             "last_name": sender.last_name,
                             "email": sender.email,
                         },
-                        "image_url": sender.photo_url,
                     },
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),

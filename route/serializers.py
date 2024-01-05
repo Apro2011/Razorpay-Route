@@ -5,19 +5,19 @@ from rest_framework import serializers
 class RecieversGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecieversGroup
-        exclude = ["photo", "photo_url"]
+        exclude = ["photo"]
 
 
 class RecieverSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reciever
-        exclude = ["photo", "photo_url"]
+        exclude = ["photo"]
 
 
 class RecieverDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reciever
-        exclude = ["photo", "photo_url"]
+        exclude = ["photo"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):

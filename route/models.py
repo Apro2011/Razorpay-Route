@@ -5,16 +5,16 @@ from sender_auth_app.models import Sender
 # Create your models here.
 class RecieversGroup(models.Model):
     created_by = models.ForeignKey(
-        Sender, on_delete=models.CASCADE, null=True, blank=True
+        Sender, on_delete=models.PROTECT, null=True, blank=True
     )
     name = models.CharField(max_length=200, unique=True)
     photo = models.ImageField(upload_to="", null=True, blank=True)
-    photo_url = models.URLField(null=True, blank=True, max_length=50000)
+    photo_url = models.CharField(max_length=5000, null=True, blank=True)
 
 
 class Reciever(models.Model):
     created_by = models.ForeignKey(
-        Sender, on_delete=models.CASCADE, null=True, blank=True
+        Sender, on_delete=models.PROTECT, null=True, blank=True
     )
     main_id = models.BigAutoField(unique=True, primary_key=True)
     email = models.EmailField(max_length=250, unique=True)
@@ -45,16 +45,20 @@ class Reciever(models.Model):
     ifsc_code = models.CharField(max_length=20, null=True, blank=True)
 
     # Add related_name to resolve reverse accessor clash
-    groups = models.ManyToManyField(
-        RecieversGroup, related_name="reciever_recievergroups", blank=True
+    group = models.ForeignKey(
+        RecieversGroup,
+        related_name="reciever_recievergroup",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     photo = models.ImageField(upload_to="", null=True, blank=True)
-    photo_url = models.URLField(null=True, blank=True, max_length=50000)
+    photo_url = models.CharField(max_length=5000, null=True, blank=True)
 
 
 class Payment(models.Model):
     created_by = models.ForeignKey(
-        Sender, on_delete=models.CASCADE, null=True, blank=True
+        Sender, on_delete=models.PROTECT, null=True, blank=True
     )
     upi_link = models.BooleanField(default=True)
     amount = models.IntegerField()
