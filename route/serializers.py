@@ -17,7 +17,7 @@ class RecieverSerializer(serializers.ModelSerializer):
 class RecieverDetailsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Reciever
-        fields = ["percentage"]
+        exclude = ["photo", "photo_url"]
 
 
 class PaymentSerializer(serializers.ModelSerializer):

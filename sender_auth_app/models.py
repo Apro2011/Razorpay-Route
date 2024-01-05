@@ -10,7 +10,7 @@ class Sender(AbstractUser):
     first_name = models.CharField(max_length=200, null=True, blank=True)
     last_name = models.CharField(max_length=200, blank=True, null=True)
     photo = models.ImageField(upload_to="", null=True, blank=True)
-    photo_url = models.URLField(null=True, blank=True)
+    photo_url = models.URLField(null=True, blank=True, max_length=50000)
 
     EMAIL_FIELD = "email"
     REQUIRED_FIELDS = ["email", "password", "password2"]

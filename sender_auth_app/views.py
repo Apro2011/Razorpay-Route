@@ -38,12 +38,14 @@ class SenderCreationAPI(APIView):
             )
             sender.photo = request.data.get("file")
             sender.save()
+            sender.photo_url = request.build_absolute_uri(sender.photo.url)
+            sender.save()
             refresh = RefreshToken.for_user(sender)
             return Response(
                 {
                     "data": {
                         "data": serializer.data,
-                        "image_url": request.build_absolute_uri(sender.photo.url),
+                        "image_url": sender.photo_url,
                         "access": str(refresh.access_token),
                     },
                     "status": True,
@@ -67,6 +69,7 @@ class SenderAuthAPI(APIView):
             password = serializer.validated_data.get("password")
             try:
                 sender = Sender.objects.get(email=email, password=password)
+                print(sender.photo_url)
             except Exception as e:
                 return Response(
                     {
@@ -80,6 +83,15 @@ class SenderAuthAPI(APIView):
 
             return Response(
                 {
+                    "data": {
+                        "data": {
+                            "id": sender.pk,
+                            "first_name": sender.first_name,
+                            "last_name": sender.last_name,
+                            "email": sender.email,
+                        },
+                        "image_url": sender.photo_url,
+                    },
                     "refresh": str(refresh),
                     "access": str(refresh.access_token),
                     "status": True,

@@ -9,7 +9,7 @@ class RecieversGroup(models.Model):
     )
     name = models.CharField(max_length=200, unique=True)
     photo = models.ImageField(upload_to="", null=True, blank=True)
-    photo_url = models.URLField(null=True, blank=True)
+    photo_url = models.URLField(null=True, blank=True, max_length=50000)
 
 
 class Reciever(models.Model):
@@ -49,7 +49,7 @@ class Reciever(models.Model):
         RecieversGroup, related_name="reciever_recievergroups", blank=True
     )
     photo = models.ImageField(upload_to="", null=True, blank=True)
-    photo_url = models.URLField(null=True, blank=True)
+    photo_url = models.URLField(null=True, blank=True, max_length=50000)
 
 
 class Payment(models.Model):

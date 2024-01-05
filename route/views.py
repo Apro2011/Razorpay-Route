@@ -38,13 +38,7 @@ class CreatingGroup(APIView):
                 for reciever in recievers
             ]
         data = [
-            {
-                "id": group.pk,
-                "name": group.name,
-                "photo": request.build_absolute_uri(group.photo.url)
-                if group.photo
-                else None,
-            }
+            {"id": group.pk, "name": group.name, "photo": group.photo_url}
             for group in groups
         ]
         return Response({"data": data, "related_recievers": reciever_data})
@@ -59,12 +53,14 @@ class CreatingGroup(APIView):
             )
             group.photo = request.data.get("file")
             group.save()
+            group.photo_url = request.build_absolute_uri(group.photo.url)
+            group.save()
 
             return Response(
                 {
                     "data": {
                         "data": serializer.data,
-                        "image_url": request.build_absolute_uri(group.photo.url),
+                        "image_url": group.photo_url,
                     },
                     "status": True,
                 },
@@ -90,9 +86,7 @@ class RecieverList(APIView):
         image = [
             {
                 "id": reciever.pk,
-                "photo": request.build_absolute_uri(reciever.photo.url)
-                if reciever.photo
-                else None,
+                "photo": reciever.photo_url,
             }
             for reciever in recievers
         ]
@@ -114,6 +108,8 @@ class RecieverList(APIView):
             )
             reciever.groups.add(group)
             reciever.photo = request.data.get("file")
+            reciever.save()
+            reciever.photo_url = request.build_absolute_uri(reciever.photo.url)
             reciever.save()
             # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"
@@ -280,9 +276,7 @@ class RecieverList(APIView):
                                     "data": [
                                         {
                                             "data": serializer.data,
-                                            "image_url": request.build_absolute_uri(
-                                                reciever.photo.url
-                                            ),
+                                            "image_url": reciever.photo_url,
                                         },
                                         account_response.json(),
                                         stakeholder_response.json(),
@@ -319,12 +313,25 @@ class RecieverDetails(APIView):
 
     def put(self, request, pk, format=None):
         reciever = self.get_object(pk=pk)
-        serializer = RecieverDetailsSerializer(reciever, data=request.data)
+        serializer = RecieverDetailsSerializer(
+            reciever,
+            data=request.data,
+            partial=True,
+        )
         if serializer.is_valid():
             serializer.save()
+            image = [
+                {
+                    "id": reciever.pk,
+                    "photo": reciever.photo_url,
+                }
+            ]
             return Response(
                 {
-                    "data": serializer.data,
+                    "data": {
+                        "data": serializer.data,
+                        "image_url": image,
+                    },
                     "status": True,
                 },
                 status=status.HTTP_202_ACCEPTED,

@@ -6,6 +6,7 @@ class SenderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sender
         fields = [
+            "id",
             "email",
             "first_name",
             "last_name",
