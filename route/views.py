@@ -106,7 +106,6 @@ class RecieverList(APIView):
             try:
                 group = RecieversGroup.objects.get(
                     name=serializer.validated_data.get("group_name"),
-                    created_by=request.user,
                 )
             except Exception as e:
                 return Response({"error": f"{e}", "status": False})
@@ -114,6 +113,8 @@ class RecieverList(APIView):
 
             percentage_sum = 0
             for p in related_recievers:
+                if not p.percentage:
+                    return Response({"errors": f"percentage of {p} is null"})
                 percentage_sum += int(p.percentage)
 
             percentage_sum += int(serializer.validated_data.get("percentage"))
@@ -121,7 +122,7 @@ class RecieverList(APIView):
             if percentage_sum > 100:
                 return Response(
                     {
-                        "error": "Sum of percentages should be equal to 100",
+                        "error": "Sum of percentages should be less than or equal to 100",
                         "status": False,
                     },
                     status=status.HTTP_412_PRECONDITION_FAILED,
@@ -381,15 +382,10 @@ class UPIPaymentLinkAPIs(APIView):
         serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data["created_by"] = request.user
-            if serializer.validated_data.get("amount").isdigit() == False:
-                return Response(
-                    {"error": "amount should be in integer", "status": False},
-                    status=status.HTTP_406_NOT_ACCEPTABLE,
-                )
+
             try:
                 group = RecieversGroup.objects.get(
                     name=serializer.validated_data.get("group_name"),
-                    created_by=request.user,
                 )
             except Exception as e:
                 return Response({"error": f"{e}", "status": False})
@@ -397,7 +393,7 @@ class UPIPaymentLinkAPIs(APIView):
             initial_amount = int(serializer.validated_data.get("amount")) * 100
             for reciever in related_recievers:
                 reciever_amount = initial_amount * (int(reciever.percentage) / 100)
-                reciever.payment = str(reciever_amount)
+                reciever.payment = str(int(reciever_amount))
                 reciever.save()
 
             serializer.save()
@@ -568,10 +564,13 @@ class SplitPayments(APIView):
             a.paid_at = datetime.now(IST)
             a.save()
 
+        payment_data.paid_at = datetime.now(IST)
+        payment_data.save()
+
         return Response(
             {
                 "data": {
-                    "payment_data": payment_data,
+                    "payment_data": {"paid_at": payment_data.paid_at},
                     "razorpay_data": transfer_response.json(),
                 },
                 "status": True,
