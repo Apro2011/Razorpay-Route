@@ -1,18 +1,22 @@
 from django.db import models
 from sender_auth_app.models import Sender
+from django.db.models.functions import Now
 
 
 # Create your models here.
 class RecieversGroup(models.Model):
+    paid_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         Sender, on_delete=models.PROTECT, null=True, blank=True
     )
     name = models.CharField(max_length=200, unique=True)
+    transaction_status = models.BooleanField(default=False)
     photo = models.ImageField(upload_to="", null=True, blank=True)
     photo_url = models.CharField(max_length=5000, null=True, blank=True)
 
 
 class Reciever(models.Model):
+    paid_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         Sender, on_delete=models.PROTECT, null=True, blank=True
     )
@@ -57,6 +61,7 @@ class Reciever(models.Model):
 
 
 class Payment(models.Model):
+    paid_at = models.DateTimeField(null=True, blank=True)
     created_by = models.ForeignKey(
         Sender, on_delete=models.PROTECT, null=True, blank=True
     )
@@ -76,3 +81,4 @@ class Payment(models.Model):
     paid_plink_id = models.CharField(max_length=200, null=True, blank=True)
     short_url = models.URLField(max_length=200, null=True, blank=True)
     user_id = models.CharField(max_length=200, null=True, blank=True)
+    group_name = models.CharField(max_length=100, null=True, blank=True)

@@ -10,11 +10,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 import razorpay
+from datetime import datetime
+import pytz
 import json
 import requests
 from core import settings
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser
+
+
+UTC = pytz.utc
+IST = pytz.timezone("Asia/Kolkata")
 
 
 # Create your views here.
@@ -97,9 +103,30 @@ class RecieverList(APIView):
         serializer = RecieverSerializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data["created_by"] = request.user
-            group = RecieversGroup.objects.get(
-                name=serializer.validated_data.get("group_name")
-            )
+            try:
+                group = RecieversGroup.objects.get(
+                    name=serializer.validated_data.get("group_name"),
+                    created_by=request.user,
+                )
+            except Exception as e:
+                return Response({"error": f"{e}", "status": False})
+            related_recievers = Reciever.objects.filter(group_name=group.name)
+
+            percentage_sum = 0
+            for p in related_recievers:
+                percentage_sum += int(p.percentage)
+
+            percentage_sum += int(serializer.validated_data.get("percentage"))
+
+            if percentage_sum > 100:
+                return Response(
+                    {
+                        "error": "Sum of percentages should be equal to 100",
+                        "status": False,
+                    },
+                    status=status.HTTP_412_PRECONDITION_FAILED,
+                )
+
             serializer.save()
             reciever = Reciever.objects.get(
                 reference_id=serializer.validated_data.get("reference_id")
@@ -354,6 +381,25 @@ class UPIPaymentLinkAPIs(APIView):
         serializer = PaymentSerializer(data=request.data)
         if serializer.is_valid():
             serializer.validated_data["created_by"] = request.user
+            if serializer.validated_data.get("amount").isdigit() == False:
+                return Response(
+                    {"error": "amount should be in integer", "status": False},
+                    status=status.HTTP_406_NOT_ACCEPTABLE,
+                )
+            try:
+                group = RecieversGroup.objects.get(
+                    name=serializer.validated_data.get("group_name"),
+                    created_by=request.user,
+                )
+            except Exception as e:
+                return Response({"error": f"{e}", "status": False})
+            related_recievers = Reciever.objects.filter(group_name=group.name)
+            initial_amount = int(serializer.validated_data.get("amount")) * 100
+            for reciever in related_recievers:
+                reciever_amount = initial_amount * (int(reciever.percentage) / 100)
+                reciever.payment = str(reciever_amount)
+                reciever.save()
+
             serializer.save()
 
             # Create UPI Payment Link
@@ -472,34 +518,11 @@ class UPIPaymentLinkData(APIView):
 class SplitPayments(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, format=None):
-        payment_pk = request.data.get("payment_pk")
-        group_name = request.data.get("group_name", [])
-        payment_data = Payment.objects.get(pk=payment_pk)
-
-        initial_amount = payment_data.amount * 100
-        reciever_list_in_group = Reciever.objects.filter(group_name=group_name)
-
-        # client = razorpay.Client(
-        #     auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET)
-        # )
-
-        percentage_sum = 0
-        for p in reciever_list_in_group:
-            percentage_sum += int(p.percentage)
-
-        if percentage_sum != 100:
-            return Response(
-                {
-                    "message": "Sum of percentages should be equal to 100",
-                    "status": False,
-                },
-                status=status.HTTP_412_PRECONDITION_FAILED,
-            )
-
-        for reciever in reciever_list_in_group:
-            reciever_amount = initial_amount * (int(reciever.percentage) / 100)
-            reciever.payment = reciever_amount
+    def post(self, request, pk, format=None):
+        payment_data = Payment.objects.get(pk=pk)
+        reciever_list_in_group = Reciever.objects.filter(
+            group_name=payment_data.group_name
+        )
 
         transfer_list = []
         for a in reciever_list_in_group:
@@ -535,9 +558,22 @@ class SplitPayments(APIView):
                 },
                 status=status.HTTP_406_NOT_ACCEPTABLE,
             )
+
+        group = RecieversGroup.objects.get(name=payment_data.group_name)
+        group.transaction_status = True
+        group.paid_at = datetime.now(IST)
+        group.save()
+
+        for a in reciever_list_in_group:
+            a.paid_at = datetime.now(IST)
+            a.save()
+
         return Response(
             {
-                "data": transfer_response.json(),
+                "data": {
+                    "payment_data": payment_data,
+                    "razorpay_data": transfer_response.json(),
+                },
                 "status": True,
             },
             status=status.HTTP_202_ACCEPTED,
