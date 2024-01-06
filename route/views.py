@@ -1,9 +1,10 @@
-from route.models import Reciever, RecieversGroup, Payment
+from route.models import Reciever, RecieversGroup, Payment, TransactionHistory
 from route.serializers import (
     RecieverSerializer,
     RecieverDetailsSerializer,
     RecieversGroupSerializer,
     PaymentSerializer,
+    TransactionHistorySerializer,
 )
 from django.http import Http404
 from rest_framework.views import APIView
@@ -556,16 +557,22 @@ class SplitPayments(APIView):
             )
 
         group = RecieversGroup.objects.get(name=payment_data.group_name)
-        group.transaction_status = True
         group.paid_at = datetime.now(IST)
         group.save()
 
         for a in reciever_list_in_group:
-            a.paid_at = datetime.now(IST)
+            a.paid_at = group.paid_at
             a.save()
 
-        payment_data.paid_at = datetime.now(IST)
+        payment_data.paid_at = group.paid_at
         payment_data.save()
+
+        TransactionHistory.objects.create(
+            paid_at=payment_data.paid_at,
+            created_by=request.user,
+            group=group,
+            paid_amount=payment_data.paid_amount,
+        )
 
         return Response(
             {
@@ -576,4 +583,16 @@ class SplitPayments(APIView):
                 "status": True,
             },
             status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class TransactionHistoryAPI(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def put(self, request, format=None):
+        transactions = TransactionHistory.objects.filter(created_by=request.user)
+        serializer = TransactionHistorySerializer(transactions, many=True)
+        return Response(
+            {"data": serializer.data, "status": True},
+            status=status.HTTP_200_OK,
         )

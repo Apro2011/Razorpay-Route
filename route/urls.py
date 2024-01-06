@@ -10,6 +10,7 @@ urlpatterns = [
     path("upipaymentlink/", views.UPIPaymentLinkAPIs.as_view()),
     path("paymentlinkdata/<int:pk>/", views.UPIPaymentLinkData.as_view()),
     path("group-data/<int:pk>/", views.GroupData.as_view()),
+    path("transaction-history/", views.TransactionHistoryAPI.as_view()),
 ]
 
 

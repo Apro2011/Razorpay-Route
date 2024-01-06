@@ -10,7 +10,6 @@ class RecieversGroup(models.Model):
         Sender, on_delete=models.PROTECT, null=True, blank=True
     )
     name = models.CharField(max_length=200, unique=True)
-    transaction_status = models.BooleanField(default=False)
     photo = models.ImageField(upload_to="", null=True, blank=True)
     photo_url = models.CharField(max_length=5000, null=True, blank=True)
 
@@ -51,7 +50,7 @@ class Reciever(models.Model):
     # Add related_name to resolve reverse accessor clash
     group = models.ForeignKey(
         RecieversGroup,
-        related_name="reciever_recievergroup",
+        related_name="reciever_recieversgroup",
         on_delete=models.PROTECT,
         null=True,
         blank=True,
@@ -82,3 +81,18 @@ class Payment(models.Model):
     short_url = models.URLField(max_length=200, null=True, blank=True)
     user_id = models.CharField(max_length=200, null=True, blank=True)
     group_name = models.CharField(max_length=100, null=True, blank=True)
+
+
+class TransactionHistory(models.Model):
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        Sender, on_delete=models.PROTECT, null=True, blank=True
+    )
+    group = models.ForeignKey(
+        RecieversGroup,
+        related_name="transaction_history_recieversgroup",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+    )
+    paid_amount = models.CharField(max_length=100, null=True, blank=True)
