@@ -370,6 +370,13 @@ class RecieverDetails(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    def delete(self, request, pk, format=None):
+        snippet = self.get_object(pk)
+        snippet.delete()
+        return Response(
+            {"message": "Deleted", "status": True}, status=status.HTTP_204_NO_CONTENT
+        )
+
 
 class UPIPaymentLinkAPIs(APIView):
     permission_classes = [IsAuthenticated]
