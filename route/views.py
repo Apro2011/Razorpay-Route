@@ -371,11 +371,14 @@ class RecieverDetails(APIView):
         )
 
     def delete(self, request, pk, format=None):
-        snippet = self.get_object(pk)
-        snippet.delete()
-        return Response(
-            {"message": "Deleted", "status": True}, status=status.HTTP_204_NO_CONTENT
-        )
+        reciever = self.get_object(pk)
+        try:
+            reciever.delete()
+        except Exception as e:
+            return Response(
+                {"message": "Deleted", "status": True},
+                status=status.HTTP_204_NO_CONTENT,
+            )
 
 
 class UPIPaymentLinkAPIs(APIView):
@@ -517,6 +520,17 @@ class UPIPaymentLinkData(APIView):
                 },
                 status=status.HTTP_200_OK,
             )
+
+    def put(self, request, pk, format=None):
+        payment = Payment.objects.get(pk=pk)
+        serializer = PaymentSerializer(payment)
+        return Response(
+            {
+                "data": serializer.data,
+                "status": True,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class SplitPayments(APIView):

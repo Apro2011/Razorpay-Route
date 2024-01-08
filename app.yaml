@@ -1,6 +1,6 @@
 runtime: python311
 env: standard
-entrypoint: gunicorn -b :$PORT core.wsgi:application
+entrypoint: python manage.py runserver 0.0.0.0:$PORT
 
 handlers:
 - url: /media
