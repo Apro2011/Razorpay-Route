@@ -49,9 +49,9 @@ class CreatingGroup(APIView):
             )
             group.photo = request.data.get("file")
             group.save()
-            serializer.validated_data["photo_url"] = request.build_absolute_uri(
-                group.photo.url
-            )
+            serializer.validated_data[
+                "photo_url"
+            ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
             serializer.save()
 
             return Response(
@@ -137,9 +137,9 @@ class RecieverList(APIView):
             reciever.save()
             reciever.photo = request.data.get("file")
             reciever.save()
-            serializer.validated_data["photo_url"] = request.build_absolute_uri(
-                reciever.photo.url
-            )
+            serializer.validated_data[
+                "photo_url"
+            ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
             serializer.save()
             # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"

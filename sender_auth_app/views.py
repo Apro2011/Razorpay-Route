@@ -32,9 +32,9 @@ class SenderCreationAPI(APIView):
             )
             sender.photo = request.data.get("file")
             sender.save()
-            serializer.validated_data["photo_url"] = request.build_absolute_uri(
-                sender.photo.url
-            )
+            serializer.validated_data[
+                "photo_url"
+            ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
             serializer.save()
             refresh = RefreshToken.for_user(sender)
             return Response(
