@@ -129,18 +129,6 @@ class RecieverList(APIView):
                     status=status.HTTP_412_PRECONDITION_FAILED,
                 )
 
-            serializer.save()
-            reciever = Reciever.objects.get(
-                reference_id=serializer.validated_data.get("reference_id")
-            )
-            reciever.group = group
-            reciever.save()
-            reciever.photo = request.data.get("file")
-            reciever.save()
-            serializer.validated_data[
-                "photo_url"
-            ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
-            serializer.save()
             # Create Linked Accounts
             accounts_url = "https://api.razorpay.com/v2/accounts"
             account_data = {
@@ -189,6 +177,19 @@ class RecieverList(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             else:
+                serializer.save()
+                reciever = Reciever.objects.get(
+                    reference_id=serializer.validated_data.get("reference_id")
+                )
+                reciever.group = group
+                reciever.save()
+                reciever.photo = request.data.get("file")
+                reciever.save()
+                serializer.validated_data[
+                    "photo_url"
+                ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
+                serializer.save()
+
                 razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
                 serializer.validated_data["razor_id"] = razor_id
                 serializer.save()
@@ -394,21 +395,6 @@ class UPIPaymentLinkAPIs(APIView):
         if serializer.is_valid():
             serializer.validated_data["created_by"] = request.user
 
-            try:
-                group = RecieversGroup.objects.get(
-                    name=serializer.validated_data.get("group_name"),
-                )
-            except Exception as e:
-                return Response({"error": f"{e}", "status": False})
-            related_recievers = Reciever.objects.filter(group_name=group.name)
-            initial_amount = int(serializer.validated_data.get("amount")) * 100
-            for reciever in related_recievers:
-                reciever_amount = initial_amount * (int(reciever.percentage) / 100)
-                reciever.payment = str(int(reciever_amount))
-                reciever.save()
-
-            serializer.save()
-
             # Create UPI Payment Link
             payment_url = "https://api.razorpay.com/v1/payment_links/"
             payment_data = {
@@ -422,8 +408,6 @@ class UPIPaymentLinkAPIs(APIView):
                     "contact": serializer.validated_data.get("customer_contact"),
                     "email": serializer.validated_data.get("email"),
                 },
-                "callback_url": serializer.validated_data.get("callback_url"),
-                "callback_method": serializer.validated_data.get("callback_method"),
             }
 
             payment_response = requests.post(
@@ -442,6 +426,22 @@ class UPIPaymentLinkAPIs(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             else:
+                try:
+                    group = RecieversGroup.objects.get(
+                        name=serializer.validated_data.get("group_name"),
+                    )
+                except Exception as e:
+                    return Response({"error": f"{e}", "status": False})
+
+                related_recievers = Reciever.objects.filter(group_name=group.name)
+                initial_amount = int(serializer.validated_data.get("amount")) * 100
+                for reciever in related_recievers:
+                    reciever_amount = initial_amount * (int(reciever.percentage) / 100)
+                    reciever.payment = str(int(reciever_amount))
+                    reciever.save()
+
+                serializer.save()
+
                 payment_endpoint_data = json.loads(
                     payment_response.content.decode("utf-8")
                 )
