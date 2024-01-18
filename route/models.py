@@ -36,7 +36,7 @@ class Reciever(models.Model):
     postal_code = models.CharField(max_length=20, null=True, blank=True)
     country = models.CharField(max_length=250, null=True, blank=True)
     payment = models.CharField(max_length=10, null=True, blank=True)
-    percentage = models.CharField(max_length=4, null=True, blank=True)
+    percentage = models.CharField(max_length=4, default="0")
     pan = models.CharField(max_length=100, null=True, blank=True)
     gst = models.CharField(max_length=100, null=True, blank=True)
     razor_id = models.CharField(max_length=100, null=True, blank=True)

@@ -355,6 +355,25 @@ class RecieverDetails(APIView):
             partial=True,
         )
         if serializer.is_valid():
+            # return Response({"error": f"{e}", "status": False})
+            related_recievers = Reciever.objects.filter(group_name=reciever.group_name)
+
+            percentage_sum = 0
+            for p in related_recievers:
+                if not p.percentage:
+                    return Response({"errors": f"percentage of {p} is null"})
+                percentage_sum += int(p.percentage)
+            if serializer.validated_data.get("percentage") != None:
+                percentage_sum += int(serializer.validated_data.get("percentage"))
+
+            if percentage_sum > 100:
+                return Response(
+                    {
+                        "error": "Sum of percentages should be less than or equal to 100",
+                        "status": False,
+                    },
+                    status=status.HTTP_412_PRECONDITION_FAILED,
+                )
             serializer.save()
             return Response(
                 {
