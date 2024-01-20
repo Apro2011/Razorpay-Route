@@ -75,6 +75,26 @@ class GroupData(APIView):
         group = RecieversGroup.objects.get(pk=pk)
         recievers = Reciever.objects.filter(group_name=group.name)
         serializer1 = RecieversGroupSerializer(group)
+
+        percentage_list = request.data.get("percentage_update_list")
+        if percentage_list != None:
+            percentage_sum = 0
+            for p in percentage_list:
+                percentage_sum += p[1]
+            if percentage_sum != 100:
+                return Response(
+                    {
+                        "error": "Sum of percentages should be equal to 100",
+                        "status": False,
+                    },
+                    status=status.HTTP_412_PRECONDITION_FAILED,
+                )
+            else:
+                percentage_dict = {x[0]: x[1] for x in percentage_list}
+                for reciever in recievers:
+                    reciever.percentage = percentage_dict[reciever.main_id]
+                    reciever.save()
+
         serializer2 = RecieverSerializer(recievers, many=True)
 
         return Response(
