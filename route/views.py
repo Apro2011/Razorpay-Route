@@ -93,6 +93,10 @@ class GroupData(APIView):
                 percentage_dict = {x[0]: x[1] for x in percentage_list}
                 for reciever in recievers:
                     reciever.percentage = percentage_dict[reciever.main_id]
+                    reciever_amount = int(group.total_amount) * (
+                        int(reciever.percentage) / 100
+                    )
+                    reciever.payment = str(int(reciever_amount))
                     reciever.save()
 
         serializer2 = RecieverSerializer(recievers, many=True)
@@ -474,6 +478,8 @@ class UPIPaymentLinkAPIs(APIView):
 
                 related_recievers = Reciever.objects.filter(group_name=group.name)
                 initial_amount = int(serializer.validated_data.get("amount")) * 100
+                group.total_amount = str(initial_amount)
+                group.save()
                 for reciever in related_recievers:
                     reciever_amount = initial_amount * (int(reciever.percentage) / 100)
                     reciever.payment = str(int(reciever_amount))

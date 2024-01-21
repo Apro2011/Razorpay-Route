@@ -12,6 +12,7 @@ class RecieversGroup(models.Model):
     name = models.CharField(max_length=200, unique=True)
     photo = models.ImageField(upload_to="", null=True, blank=True)
     photo_url = models.CharField(max_length=5000, null=True, blank=True)
+    total_amount = models.CharField(max_length=10, null=True, blank=True)
 
 
 class Reciever(models.Model):
