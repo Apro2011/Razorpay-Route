@@ -141,8 +141,8 @@ class RecieverList(APIView):
                 if not p.percentage:
                     return Response({"errors": f"percentage of {p} is null"})
                 percentage_sum += int(p.percentage)
-
-            percentage_sum += int(serializer.validated_data.get("percentage"))
+            if serializer.validated_data.get("percentage") != None:
+                percentage_sum += int(serializer.validated_data.get("percentage"))
 
             if percentage_sum > 100:
                 return Response(
