@@ -158,16 +158,16 @@ class RecieverList(APIView):
             account_data = {
                 "email": serializer.validated_data.get("email"),
                 "phone": serializer.validated_data.get("phone"),
-                "type": serializer.validated_data.get("type", "route"),
+                "type": "route",
                 "reference_id": serializer.validated_data.get("reference_id"),
                 "legal_business_name": serializer.validated_data.get(
                     "legal_business_name"
                 ),
-                "business_type": serializer.validated_data.get("business_type"),
+                "business_type": "individual",
                 "contact_name": serializer.validated_data.get("contact_name"),
                 "profile": {
-                    "category": serializer.validated_data.get("category"),
-                    "subcategory": serializer.validated_data.get("subcategory"),
+                    "category": "healthcare",
+                    "subcategory": "clinic",
                     "addresses": {
                         "registered": {
                             "street1": serializer.validated_data.get("street1"),
@@ -175,7 +175,7 @@ class RecieverList(APIView):
                             "city": serializer.validated_data.get("city"),
                             "state": serializer.validated_data.get("state"),
                             "postal_code": serializer.validated_data.get("postal_code"),
-                            "country": serializer.validated_data.get("country"),
+                            "country": "IN",
                         }
                     },
                 },
@@ -231,7 +231,7 @@ class RecieverList(APIView):
                             "city": serializer.validated_data["city"],
                             "state": serializer.validated_data["state"],
                             "postal_code": serializer.validated_data["postal_code"],
-                            "country": serializer.validated_data["country"],
+                            "country": "IN",
                         }
                     },
                 }
@@ -443,9 +443,9 @@ class UPIPaymentLinkAPIs(APIView):
             payment_data = {
                 "upi_link": serializer.validated_data.get("upi_link"),
                 "amount": int(serializer.validated_data.get("amount")) * 100,
-                "currency": serializer.validated_data.get("currency"),
+                "currency": "INR",
                 "reference_id": serializer.validated_data.get("reference_id"),
-                "description": serializer.validated_data.get("description"),
+                "description": "Split Payment",
                 "customer": {
                     "name": serializer.validated_data.get("customer_name"),
                     "contact": serializer.validated_data.get("customer_contact"),
