@@ -20,6 +20,8 @@ django-storages = {extras = ["google"], version = "*"}
 google-cloud-storage = "*"
 pillow = "*"
 google = "*"
+drf-yasg = "*"
+django-rest-swagger = "*"
 
 [dev-packages]
 
