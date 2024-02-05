@@ -18,6 +18,7 @@ import requests
 from core import settings
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser
+from cloudinary.api import resource
 
 
 UTC = pytz.utc
@@ -29,7 +30,7 @@ class CreatingGroup(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
-    def put(self, request, format=None):
+    def get(self, request, format=None):
         groups = RecieversGroup.objects.filter(created_by=request.user)
 
         serializer = RecieversGroupSerializer(groups, many=True)
@@ -49,9 +50,14 @@ class CreatingGroup(APIView):
             )
             group.photo = request.data.get("file")
             group.save()
-            serializer.validated_data[
-                "photo_url"
-            ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
+            cloudinary_response = resource(
+                type="upload",
+                public_id=group.photo.public_id,
+            )
+
+            serializer.validated_data["photo_url"] = cloudinary_response.get(
+                "secure_url"
+            )
             serializer.save()
 
             return Response(
@@ -71,7 +77,7 @@ class CreatingGroup(APIView):
 
 
 class GroupData(APIView):
-    def put(self, request, pk, format=None):
+    def get(self, request, pk, format=None):
         group = RecieversGroup.objects.get(pk=pk)
         recievers = Reciever.objects.filter(group_name=group.name)
         serializer1 = RecieversGroupSerializer(group)
@@ -115,7 +121,7 @@ class RecieverList(APIView):
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
 
-    def put(self, request, format=None):
+    def get(self, request, format=None):
         recievers = Reciever.objects.filter(created_by=request.user)
         serializer = RecieverSerializer(recievers, many=True)
 
@@ -209,9 +215,14 @@ class RecieverList(APIView):
                 reciever.save()
                 reciever.photo = request.data.get("file")
                 reciever.save()
-                serializer.validated_data[
-                    "photo_url"
-                ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
+                cloudinary_response = resource(
+                    type="upload",
+                    public_id=reciever.photo.public_id,
+                )
+
+                serializer.validated_data["photo_url"] = cloudinary_response.get(
+                    "secure_url"
+                )
                 serializer.save()
 
                 razor_id = json.loads(account_response.content.decode("utf-8"))["id"]
@@ -360,7 +371,7 @@ class RecieverDetails(APIView):
         except Reciever.DoesNotExist:
             raise Http404
 
-    def options(self, request, pk, format=None):
+    def get(self, request, pk, format=None):
         reciever = self.get_object(pk=pk)
         serializer = RecieverSerializer(reciever)
         return Response(
@@ -428,7 +439,7 @@ class RecieverDetails(APIView):
 class UPIPaymentLinkAPIs(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, format=None):
+    def get(self, request, format=None):
         payments = Payment.objects.filter(created_by=request.user)
         serializer = PaymentSerializer(payments, many=True)
         return Response(serializer.data)
@@ -497,9 +508,9 @@ class UPIPaymentLinkAPIs(APIView):
                     serializer.validated_data["paid_amount"] = payment_endpoint_data[
                         "payments"
                     ][0]["amount"]
-                    serializer.validated_data[
-                        "paid_payment_id"
-                    ] = payment_endpoint_data["payments"][0]["payment_id"]
+                    serializer.validated_data["paid_payment_id"] = (
+                        payment_endpoint_data["payments"][0]["payment_id"]
+                    )
                     serializer.validated_data["paid_plink_id"] = payment_endpoint_data[
                         "payments"
                     ][0]["plink_id"]
@@ -529,7 +540,7 @@ class UPIPaymentLinkAPIs(APIView):
 class UPIPaymentLinkData(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, pk, format=None):
+    def patch(self, request, pk, format=None):
         payment = Payment.objects.get(pk=pk)
         payment_url = (
             "https://api.razorpay.com/v1/payment_links/" + payment.payment_link_id
@@ -566,7 +577,7 @@ class UPIPaymentLinkData(APIView):
                 status=status.HTTP_200_OK,
             )
 
-    def put(self, request, pk, format=None):
+    def get(self, request, pk, format=None):
         payment = Payment.objects.get(pk=pk)
         serializer = PaymentSerializer(payment)
         return Response(
@@ -655,9 +666,11 @@ class SplitPayments(APIView):
 class TransactionHistoryAPI(APIView):
     permission_classes = [IsAuthenticated]
 
-    def put(self, request, format=None):
-        transactions = TransactionHistory.objects.filter(created_by=request.user)
-        serializer = TransactionHistorySerializer(transactions, many=True)
+    def get(self, request, format=None):
+        transactions = RecieversGroup.objects.filter(
+            created_by=request.user, paid_at__isnull=False
+        )
+        serializer = RecieversGroupSerializer(transactions, many=True)
         return Response(
             {"data": serializer.data, "status": True},
             status=status.HTTP_200_OK,

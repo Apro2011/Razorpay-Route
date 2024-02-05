@@ -1,6 +1,7 @@
 from django.db import models
 from sender_auth_app.models import Sender
 from django.db.models.functions import Now
+from cloudinary.models import CloudinaryField
 
 
 # Create your models here.
@@ -10,7 +11,7 @@ class RecieversGroup(models.Model):
         Sender, on_delete=models.PROTECT, null=True, blank=True
     )
     name = models.CharField(max_length=200, unique=True)
-    photo = models.ImageField(upload_to="", null=True, blank=True)
+    photo = CloudinaryField("image", null=True)
     photo_url = models.CharField(max_length=5000, null=True, blank=True)
     total_amount = models.CharField(max_length=10, null=True, blank=True)
 
@@ -56,7 +57,7 @@ class Reciever(models.Model):
         null=True,
         blank=True,
     )
-    photo = models.ImageField(upload_to="", null=True, blank=True)
+    photo = CloudinaryField("image", null=True)
     photo_url = models.CharField(max_length=5000, null=True, blank=True)
 
 

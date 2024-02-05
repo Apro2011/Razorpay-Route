@@ -15,13 +15,11 @@ django-cors-headers = "*"
 gunicorn = "*"
 django-environ = "*"
 psycopg2-binary = "*"
-google-cloud-secret-manager = "*"
 django-storages = {extras = ["google"], version = "*"}
-google-cloud-storage = "*"
 pillow = "*"
-google = "*"
 drf-yasg = "*"
 django-rest-swagger = "*"
+cloudinary = "*"
 
 [dev-packages]
 

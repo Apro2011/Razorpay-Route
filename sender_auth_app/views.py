@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 import logging
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.http import Http404
+from cloudinary.api import resource
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ class SenderCreationAPI(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     @permission_classes([IsAuthenticated])
-    def put(self, request, format=None):
+    def get(self, request, format=None):
         senders = Sender.objects.all()
         serializer = SenderSerializer(senders, many=True)
         return Response(serializer.data)
@@ -32,9 +33,15 @@ class SenderCreationAPI(APIView):
             )
             sender.photo = request.data.get("file")
             sender.save()
-            serializer.validated_data[
-                "photo_url"
-            ] = f'https://storage.googleapis.com/split-image-bucket/{request.data.get("file").name}'
+
+            cloudinary_response = resource(
+                type="upload",
+                public_id=sender.photo.public_id,  # Assuming you have a public_id attribute in your CloudinaryField
+            )
+
+            serializer.validated_data["photo_url"] = cloudinary_response.get(
+                "secure_url"
+            )
             serializer.save()
             refresh = RefreshToken.for_user(sender)
             return Response(
@@ -65,7 +72,7 @@ class SenderDetailsAPI(APIView):
         except Sender.DoesNotExist:
             raise Http404
 
-    def options(self, request, format=None):
+    def get(self, request, format=None):
         sender = self.get_object(pk=request.user.pk)
         serializer = SenderSerializer(sender)
         return Response(

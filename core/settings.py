@@ -18,34 +18,19 @@ import environ
 from urllib.parse import urlparse
 from pathlib import Path
 import io
+import cloudinary
+from cloudinary import uploader, api
 
-from google.cloud import secretmanager
-from google.oauth2 import service_account
+cloudinary.config(
+    cloud_name=os.getenv("CLOUD_NAME"),
+    api_key=os.getenv("CLOUD_API_KEY"),
+    api_secret=os.getenv("CLOUD_API_SECRET"),
+)
 
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-env = environ.Env(DEBUG=(bool, False))
-env_file = os.path.join(BASE_DIR, ".env")
-# env.read_env(env_file)
-
-if os.path.isfile(env_file):
-    # read a local .env file
-    env.read_env(env_file)
-elif os.environ.get("GOOGLE_CLOUD_PROJECT", None):
-    # pull .env file from Secret Manager
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-
-    client = secretmanager.SecretManagerServiceClient()
-    settings_name = os.environ.get("SETTINGS_NAME", "django_settings")
-    name = f"projects/{project_id}/secrets/{settings_name}/versions/latest"
-    payload = client.access_secret_version(name=name).payload.data.decode("UTF-8")
-
-    env.read_env(io.StringIO(payload))
-else:
-    raise Exception("No local .env or GOOGLE_CLOUD_PROJECT detected. No secrets found.")
 
 
 # Quick-start development settings - unsuitable for production
@@ -55,19 +40,9 @@ else:
 SECRET_KEY = "django-insecure-ol3a0n+9frq7k1e8yi##m@%!z)9howfp8g%$#pp%&ukk)+dgap"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env("DEBUG")
+DEBUG = True
 
-APPENGINE_URL = env("APPENGINE_URL", default=None)
-if APPENGINE_URL:
-    # ensure a scheme is present in the URL before it's processed.
-    if not urlparse(APPENGINE_URL).scheme:
-        APPENGINE_URL = f"https://{APPENGINE_URL}"
-
-    ALLOWED_HOSTS = [urlparse(APPENGINE_URL).netloc]
-    CSRF_TRUSTED_ORIGINS = [APPENGINE_URL]
-    SECURE_SSL_REDIRECT = True
-else:
-    ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -86,6 +61,7 @@ INSTALLED_APPS = [
     "route",
     "sender_auth_app",
     "corsheaders",
+    "cloudinary",
 ]
 
 MIDDLEWARE = [
@@ -126,8 +102,17 @@ WSGI_APPLICATION = "core.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = {"default": env.db()}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("DATABASE_NAME"),
+        "USER": os.getenv("DATABASE_USER"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD"),
+        "HOST": os.getenv("DATABASE_HOST"),
+        "PORT": "5432",
+        "OPTIONS": {"sslmode": "require"},
+    }
+}
 
 
 # Password validation
@@ -194,13 +179,5 @@ SIMPLE_JWT = {
 
 AUTH_USER_MODEL = "sender_auth_app.Sender"
 
-GS_CREDENTIALS = service_account.Credentials.from_service_account_file(
-    os.path.join(BASE_DIR, "gcpCredentials.json")
-)
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "mediafiles"
-
-DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-# STATICFILES_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-GS_BUCKET_NAME = env("GS_BUCKET_NAME")
