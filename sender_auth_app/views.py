@@ -91,6 +91,17 @@ class SenderDetailsAPI(APIView):
             partial=True,
         )
         if serializer.is_valid():
+            if request.data.get("file") != None:
+                sender.photo = request.data.get("file")
+                sender.save()
+                cloudinary_response = resource(
+                    type="upload",
+                    public_id=sender.photo.public_id,  # Assuming you have a public_id attribute in your CloudinaryField
+                )
+
+                serializer.validated_data["photo_url"] = cloudinary_response.get(
+                    "secure_url"
+                )
             serializer.save()
             return Response(
                 {

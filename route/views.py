@@ -31,7 +31,7 @@ class CreatingGroup(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, format=None):
-        groups = RecieversGroup.objects.filter(created_by=request.user)
+        groups = RecieversGroup.objects.filter(created_by=request.user).order_by("id")
 
         serializer = RecieversGroupSerializer(groups, many=True)
 
@@ -79,7 +79,7 @@ class CreatingGroup(APIView):
 class GroupData(APIView):
     def get(self, request, pk, format=None):
         group = RecieversGroup.objects.get(pk=pk)
-        recievers = Reciever.objects.filter(group_name=group.name)
+        recievers = Reciever.objects.filter(group_name=group.name).order_by("main_id")
         serializer1 = RecieversGroupSerializer(group)
 
         percentage_list = request.data.get("percentage_update_list")
@@ -122,7 +122,7 @@ class RecieverList(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def get(self, request, format=None):
-        recievers = Reciever.objects.filter(created_by=request.user)
+        recievers = Reciever.objects.filter(created_by=request.user).order_by("main_id")
         serializer = RecieverSerializer(recievers, many=True)
 
         return Response(
@@ -440,7 +440,7 @@ class UPIPaymentLinkAPIs(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-        payments = Payment.objects.filter(created_by=request.user)
+        payments = Payment.objects.filter(created_by=request.user).order_by("id")
         serializer = PaymentSerializer(payments, many=True)
         return Response(serializer.data)
 
@@ -669,7 +669,7 @@ class TransactionHistoryAPI(APIView):
     def get(self, request, format=None):
         transactions = RecieversGroup.objects.filter(
             created_by=request.user, paid_at__isnull=False
-        )
+        ).order_by("id")
         serializer = RecieversGroupSerializer(transactions, many=True)
         return Response(
             {"data": serializer.data, "status": True},
