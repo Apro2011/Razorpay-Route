@@ -18,7 +18,7 @@ class RecieversGroup(models.Model):
 
 class Reciever(models.Model):
     paid_at = models.DateTimeField(null=True, blank=True)
-    payment_status = models.CharField(null=True, blank=True)
+    payment_status = models.BooleanField(default=False)
     created_by = models.ForeignKey(
         Sender, on_delete=models.PROTECT, null=True, blank=True
     )

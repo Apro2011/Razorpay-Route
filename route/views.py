@@ -635,18 +635,9 @@ class SplitPayments(APIView):
         group.paid_at = datetime.now(IST)
         group.save()
 
-        paid_recievers = json.loads(transfer_response.content.decode("utf-8"))["data"][
-            "razorpay_data"
-        ]["items"]
-
-        reciever_razor_id_to_payment_status = {}
-        for p in paid_recievers:
-            reciever_razor_id_to_payment_status[p["recipient"]] = p["status"]
-
         for a in reciever_list_in_group:
-            a.payment_status = reciever_razor_id_to_payment_status[a.razor_id]
-            if a.payment_status == "processed":
-                a.paid_at = group.paid_at
+            a.paid_at = group.paid_at
+            a.payment_status = True
             a.save()
 
         payment_data.paid_at = group.paid_at
