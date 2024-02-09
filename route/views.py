@@ -427,13 +427,11 @@ class RecieverDetails(APIView):
 
     def delete(self, request, pk, format=None):
         reciever = self.get_object(pk)
-        try:
-            reciever.delete()
-        except Exception as e:
-            return Response(
-                {"message": "Deleted", "status": True},
-                status=status.HTTP_204_NO_CONTENT,
-            )
+        reciever.delete()
+        return Response(
+            {"message": "Deleted", "status": True},
+            status=status.HTTP_204_NO_CONTENT,
+        )
 
 
 class UPIPaymentLinkAPIs(APIView):
@@ -667,10 +665,10 @@ class TransactionHistoryAPI(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-        transactions = RecieversGroup.objects.filter(
+        transactions = Reciever.objects.filter(
             created_by=request.user, paid_at__isnull=False
-        ).order_by("id")
-        serializer = RecieversGroupSerializer(transactions, many=True)
+        ).order_by("-paid_at")
+        serializer = RecieverSerializer(transactions, many=True)
         return Response(
             {"data": serializer.data, "status": True},
             status=status.HTTP_200_OK,
