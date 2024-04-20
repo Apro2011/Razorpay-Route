@@ -16,7 +16,7 @@ services:
   postgres:
     image: postgres:latest
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      -  $HOME/postgres_data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
     environment:
