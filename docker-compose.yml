@@ -3,9 +3,35 @@ version: "3"
 services:
   web:
     build: .
-    command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && gunicorn core.wsgi:app --bind 0.0.0.0:8000 --reload"
     container_name: razor_app
     volumes:
       - .:/razor_app
+    
+    expose:
+      - 8000
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
     ports:
-      - "8000:8000"
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=biswasaprotim1983
+      - POSTGRES_PASSWORD=nVoD1HE3GXeN
+      - POSTGRES_DB=razor-database
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "1337:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web
+    
+volumes:
+  postgres_data:
