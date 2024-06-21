@@ -18,7 +18,6 @@ import requests
 from core import settings
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import FormParser, MultiPartParser
-from cloudinary.api import resource
 
 
 UTC = pytz.utc
@@ -50,14 +49,7 @@ class CreatingGroup(APIView):
             )
             group.photo = request.data.get("file")
             group.save()
-            cloudinary_response = resource(
-                type="upload",
-                public_id=group.photo.public_id,
-            )
-
-            serializer.validated_data["photo_url"] = cloudinary_response.get(
-                "secure_url"
-            )
+            serializer.validated_data["photo_url"] = group.photo.url
             serializer.save()
 
             return Response(
@@ -217,14 +209,8 @@ class RecieverList(APIView):
                 reciever.save()
                 reciever.photo = request.data.get("file")
                 reciever.save()
-                cloudinary_response = resource(
-                    type="upload",
-                    public_id=reciever.photo.public_id,
-                )
 
-                serializer.validated_data["photo_url"] = cloudinary_response.get(
-                    "secure_url"
-                )
+                serializer.validated_data["photo_url"] = reciever.photo.url
                 serializer.save()
 
                 razor_id = json.loads(account_response.content.decode("utf-8"))["id"]

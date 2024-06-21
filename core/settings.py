@@ -23,11 +23,6 @@ from cloudinary import uploader, api
 
 load_dotenv()
 
-cloudinary.config(
-    cloud_name=os.getenv("CLOUD_NAME"),
-    api_key=os.getenv("CLOUD_API_KEY"),
-    api_secret=os.getenv("CLOUD_API_SECRET"),
-)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
