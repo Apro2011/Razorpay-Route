@@ -18,8 +18,6 @@ import environ
 from urllib.parse import urlparse
 from pathlib import Path
 import io
-import cloudinary
-from cloudinary import uploader, api
 
 load_dotenv()
 
@@ -56,7 +54,6 @@ INSTALLED_APPS = [
     "route",
     "sender_auth_app",
     "corsheaders",
-    "cloudinary",
 ]
 
 MIDDLEWARE = [
