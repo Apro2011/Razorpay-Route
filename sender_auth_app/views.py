@@ -34,14 +34,7 @@ class SenderCreationAPI(APIView):
             sender.photo = request.data.get("file")
             sender.save()
 
-            cloudinary_response = resource(
-                type="upload",
-                public_id=sender.photo.public_id,  # Assuming you have a public_id attribute in your CloudinaryField
-            )
-
-            serializer.validated_data["photo_url"] = cloudinary_response.get(
-                "secure_url"
-            )
+            serializer.validated_data["photo_url"] = sender.photo.url
             serializer.save()
             refresh = RefreshToken.for_user(sender)
             return Response(
@@ -94,14 +87,8 @@ class SenderDetailsAPI(APIView):
             if request.data.get("file") != None:
                 sender.photo = request.data.get("file")
                 sender.save()
-                cloudinary_response = resource(
-                    type="upload",
-                    public_id=sender.photo.public_id,  # Assuming you have a public_id attribute in your CloudinaryField
-                )
 
-                serializer.validated_data["photo_url"] = cloudinary_response.get(
-                    "secure_url"
-                )
+                serializer.validated_data["photo_url"] = sender.photo.url
             serializer.save()
             return Response(
                 {
