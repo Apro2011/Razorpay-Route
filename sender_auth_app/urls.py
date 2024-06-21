@@ -1,6 +1,9 @@
 from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
 from sender_auth_app import views
+from django.conf.urls.static import static
+from core import settings
+from rest_framework.urlpatterns import format_suffix_patterns
 
 urlpatterns = [
     path(
@@ -18,3 +21,8 @@ urlpatterns = [
     path("login/", views.SenderAuthAPI.as_view()),
     path("logout/", views.SenderLogoutView.as_view(), name="auth_logout"),
 ]
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+urlpatterns = format_suffix_patterns(urlpatterns)
