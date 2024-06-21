@@ -9,7 +9,6 @@ from rest_framework.permissions import IsAuthenticated
 import logging
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.http import Http404
-from cloudinary.api import resource
 
 logger = logging.getLogger(__name__)
 
