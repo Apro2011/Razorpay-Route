@@ -183,8 +183,6 @@ class RecieverList(APIView):
                 },
             }
 
-            print(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET)
-
             account_response = requests.post(
                 accounts_url,
                 auth=(settings.RAZOR_KEY_ID, settings.RAZOR_KEY_SECRET),
